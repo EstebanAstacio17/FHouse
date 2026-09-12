@@ -32,16 +32,36 @@ function aplicarTema(tema) {
 }
 
 // Modal Global Helpers
-window.abrirModalTransaccion = function () {
+window.abrirModalTransaccion = function (fuenteId, cuentaId, tipo) {
     const modal = document.getElementById('modal-nueva-transaccion');
     if (modal) {
         modal.style.display = 'flex';
+    }
+    
+    if (tipo) {
+        seleccionarTipoTransaccion(tipo);
     }
     
     const camposContainer = document.getElementById('modal-transaccion-campos-container');
     if (camposContainer && window.htmx) {
         htmx.trigger(camposContainer, 'openModalTransaccion');
     }
+
+    const aplicarSelecciones = () => {
+        if (fuenteId) {
+            const selectFuente = document.querySelector('select[name="FuenteIngresoId"]');
+            if (selectFuente) selectFuente.value = fuenteId;
+        }
+        if (cuentaId) {
+            const selectCuenta = document.querySelector('select[name="CuentaOrigenId"]');
+            if (selectCuenta) selectCuenta.value = cuentaId;
+        }
+    };
+
+    aplicarSelecciones();
+    setTimeout(aplicarSelecciones, 150);
+    setTimeout(aplicarSelecciones, 350);
+
     if (window.lucide) {
         window.lucide.createIcons();
     }
@@ -100,6 +120,14 @@ document.addEventListener('DOMContentLoaded', () => {
             form.reset();
             // Reset tipo selector to default (Egreso)
             seleccionarTipoTransaccion('2');
+        }
+
+        // Si estamos en la página de detalle de una fuente o cuenta, recargar para actualizar KPIs
+        if (window.location.pathname.toLowerCase().includes('/fuenteingreso/detalle') ||
+            window.location.pathname.toLowerCase().includes('/cuenta/detalle')) {
+            setTimeout(() => {
+                window.location.reload();
+            }, 600);
         }
     });
 

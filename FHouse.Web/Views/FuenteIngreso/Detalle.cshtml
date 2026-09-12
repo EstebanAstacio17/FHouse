@@ -93,7 +93,7 @@
             </div>
             @if (Model.Activo)
             {
-                <button type="button" x-on:click="openModalTransaccion = true" class="btn-apple-primary text-xs">
+                <button type="button" onclick="abrirModalTransaccion(@Model.Id)" class="btn-apple-primary text-xs">
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                     <span>Nuevo Movimiento</span>
                 </button>
