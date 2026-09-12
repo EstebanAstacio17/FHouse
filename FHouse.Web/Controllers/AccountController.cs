@@ -26,6 +26,11 @@ namespace FHouse.Web.Controllers
         [HttpGet]
         public ActionResult Login(string returnUrl)
         {
+            if (User != null && User.Identity != null && User.Identity.IsAuthenticated)
+            {
+                return RedirectToAction("Index", "Dashboard");
+            }
+
             ViewBag.ReturnUrl = returnUrl;
             return View(new LoginDto { ReturnUrl = returnUrl });
         }

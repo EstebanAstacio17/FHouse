@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewBag.Title - F House</title>
+
+    <!-- Anti-flicker Theme Initialization -->
+    <script>
+        (function () {
+            try {
+                const savedTheme = localStorage.getItem('fh-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                if (savedTheme === 'light') {
+                    document.documentElement.classList.add('light');
+                    document.documentElement.classList.remove('dark');
+                } else {
+                    document.documentElement.classList.add('dark');
+                }
+            } catch (e) { }
+        })();
+    </script>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Display"', '"SF Pro Text"', 'Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Alpine.js -->
+    <script defer src="https://unpkg.com/alpinejs@3.13.5/dist/cdn.min.js"></script>
+
+    <!-- Master Apple Design Stylesheet -->
+    <link rel="stylesheet" href="~/wwwroot/css/fhouse.custom.css?v=@DateTime.UtcNow.Ticks" />
+
+    <!-- Favicon & App Icons -->
+    <link rel="icon" type="image/svg+xml" href="~/wwwroot/img/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="~/wwwroot/img/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="~/wwwroot/img/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="~/wwwroot/img/apple-touch-icon.png" />
+    <link rel="shortcut icon" href="~/favicon.ico" />
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-[#0071e3]/20 selection:text-[#0071e3]">
+    @{
+        var currentAction = ViewContext.RouteData.Values["action"] != null ? ViewContext.RouteData.Values["action"].ToString() : "";
+    }
+
+    <!-- Minimal Auth Header -->
+    <header class="apple-navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-4">
+            
+            <!-- Brand Logo (Only links to Login for unauthenticated layout) -->
+            <div class="flex items-center gap-3 flex-shrink-0">
+                <a href="@Url.Action("Login", "Account")" 
+                   class="flex items-center gap-2.5 group text-decoration-none px-2.5 py-1 rounded-2xl transition-all duration-150 hover:bg-black/5 dark:hover:bg-white/5" 
+                   title="F House">
+                    <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#0071e3] to-[#2997ff] flex items-center justify-center font-bold text-white text-xs shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform flex-shrink-0">
+                        FH
+                    </div>
+                    <span class="font-bold text-base tracking-tight text-title whitespace-nowrap group-hover:text-[#0071e3] transition-colors">
+                        F House
+                    </span>
+                </a>
+            </div>
+
+            <!-- Right: Theme Toggle & Alternative Auth Action -->
+            <div class="flex items-center gap-3 flex-shrink-0">
+                <!-- Theme Toggle Button -->
+                <button type="button" onclick="alternarTema()" class="btn-theme-toggle" title="Alternar modo Claro / Oscuro">
+                    <i id="icono-tema" data-lucide="sun" class="w-4 h-4"></i>
+                </button>
+
+                @if (currentAction.Equals("Register", StringComparison.OrdinalIgnoreCase))
+                {
+                    <a href="@Url.Action("Login", "Account")" class="btn-apple-secondary text-xs font-semibold">
+                        <i data-lucide="log-in" class="w-3.5 h-3.5"></i>
+                        <span>Iniciar Sesión</span>
+                    </a>
+                }
+                else
+                {
+                    <a href="@Url.Action("Register", "Account")" class="btn-apple-primary text-xs font-semibold">
+                        <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
+                        <span>Crear Cuenta</span>
+                    </a>
+                }
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex items-center justify-center w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div class="w-full">
+            @if (TempData["Exito"] != null)
+            {
+                <div class="max-w-md mx-auto mb-6 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs flex items-center gap-3 shadow-sm">
+                    <i data-lucide="check-circle" class="w-5 h-5 flex-shrink-0"></i>
+                    <span>@TempData["Exito"]</span>
+                </div>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <div class="max-w-md mx-auto mb-6 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs flex items-center gap-3 shadow-sm">
+                    <i data-lucide="alert-triangle" class="w-5 h-5 flex-shrink-0"></i>
+                    <div>@Html.Raw(TempData["Error"])</div>
+                </div>
+            }
+
+            @RenderBody()
+        </div>
+    </main>
+
+    <!-- Minimal Auth Footer -->
+    <footer class="border-t border-black/5 dark:border-white/5 py-6 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-subtitle gap-3">
+            <div class="flex items-center gap-2">
+                <span class="font-semibold text-title">F House (FH)</span>
+                <span>•</span>
+                <span>Gestión Financiera Familiar Privada y Segura</span>
+            </div>
+            <div>
+                Monedas soportadas: <strong class="font-semibold text-title">RD$ DOP</strong> y <strong class="font-semibold text-title">$ USD</strong>
+            </div>
+        </div>
+    </footer>
+
+    <!-- App Script -->
+    <script src="~/wwwroot/js/fhouse.app.js"></script>
+    @RenderSection("Scripts", required: false)
+</body>
+</html>
