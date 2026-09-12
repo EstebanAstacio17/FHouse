@@ -73,15 +73,15 @@
 
         var nombreUsuario = (Session["NombreCompleto"] != null && !string.IsNullOrWhiteSpace(Session["NombreCompleto"].ToString())) 
             ? Session["NombreCompleto"].ToString() 
-            : (claimNombre != null ? claimNombre.Value : ((User != null && User.Identity != null) ? User.Identity.Name : "Esteban Gómez"));
+            : (claimNombre != null ? claimNombre.Value : ((User != null && User.Identity != null) ? User.Identity.Name : "Usuario"));
             
         var emailUsuario = (Session["Email"] != null && !string.IsNullOrWhiteSpace(Session["Email"].ToString())) 
             ? Session["Email"].ToString() 
-            : (claimEmail != null ? claimEmail.Value : ((User != null && User.Identity != null) ? User.Identity.Name : "admin@fhouse.com"));
+            : (claimEmail != null ? claimEmail.Value : ((User != null && User.Identity != null) ? User.Identity.Name : ""));
             
         var rol = (Session["Rol"] != null && !string.IsNullOrWhiteSpace(Session["Rol"].ToString())) 
             ? Session["Rol"].ToString() 
-            : (claimRol != null ? claimRol.Value : "Admin");
+            : (claimRol != null ? claimRol.Value : "Miembro");
             
         var familiaNombre = (ViewBag.FamiliaNombreActual as string) ?? (Session["FamiliaNombre"] != null ? Session["FamiliaNombre"].ToString() : (claimFamilia != null ? claimFamilia.Value : "Mi Familia"));
         var iniciales = !string.IsNullOrWhiteSpace(nombreUsuario) && nombreUsuario.Trim().Length >= 2 ? nombreUsuario.Trim().Substring(0, 2).ToUpper() : (!string.IsNullOrWhiteSpace(nombreUsuario) ? nombreUsuario.Trim().ToUpper() : "FH");

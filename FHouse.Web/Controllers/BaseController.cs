@@ -107,7 +107,7 @@ namespace FHouse.Web.Controllers
                 return claim.Value;
             }
 
-            return User?.Identity?.Name ?? "admin@fhouse.com";
+            return User?.Identity?.Name ?? string.Empty;
         }
 
         protected string GetRolUsuario()
@@ -180,21 +180,8 @@ namespace FHouse.Web.Controllers
         protected bool EsAdminFamilia()
         {
             var rol = GetRolUsuario();
-            if (string.Equals(rol, "Admin", System.StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(rol, "Administrador", System.StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-
-            var email = GetEmailUsuario();
-            if (string.Equals(email, "admin@fhouse.com", System.StringComparison.OrdinalIgnoreCase))
-            {
-                Session["Rol"] = "Admin";
-                if (HttpContext != null) HttpContext.Items["__FH_UserRole"] = "Admin";
-                return true;
-            }
-
-            return false;
+            return string.Equals(rol, "Admin", System.StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(rol, "Administrador", System.StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>Manejo global de UnauthorizedAccessException — redirige a Login.</summary>
