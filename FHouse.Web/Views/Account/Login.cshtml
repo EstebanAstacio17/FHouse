@@ -9,7 +9,7 @@
     <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[480px] h-[480px] bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
     <!-- Apple ID Style Authentication Card -->
-    <div class="apple-card w-full max-w-md p-8 sm:p-10 relative shadow-2xl border border-black/10 dark:border-white/10" x-data="{ email: '@(Model != null ? Model.Email : "")', password: '' }">
+    <div class="apple-card w-full max-w-md p-8 sm:p-10 relative shadow-2xl border border-black/10 dark:border-white/10" x-data="{ showPassword: false }">
         <!-- Logo & Brand Header -->
         <div class="text-center mb-8">
             <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#0071e3] to-[#2997ff] flex items-center justify-center font-extrabold text-white text-base shadow-lg shadow-blue-500/25 mx-auto mb-4">
@@ -21,8 +21,11 @@
 
         @if (!ViewData.ModelState.IsValid)
         {
-            <div class="mb-6 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs">
-                @Html.ValidationSummary(true, "", new { @class = "font-medium" })
+            <div class="mb-6 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/25 text-rose-600 dark:text-rose-400 text-xs flex items-start gap-3 shadow-sm animate-shake">
+                <i data-lucide="alert-circle" class="w-5 h-5 flex-shrink-0 mt-0.5 text-rose-500"></i>
+                <div class="flex-1 font-medium leading-relaxed">
+                    @Html.ValidationSummary(false, "", new { @class = "validation-error-list" })
+                </div>
             </div>
         }
 
@@ -37,13 +40,16 @@
                     <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; pointer-events: none; z-index: 10;" class="text-muted-app">
                         <i data-lucide="mail" style="width: 16px; height: 16px;"></i>
                     </span>
-                    <input type="email" name="Email" required x-model="email" placeholder="ejemplo@correo.com" 
+                    <input type="email" name="Email" required 
+                           value="@(Model != null ? Model.Email : "")" 
+                           placeholder="ejemplo@correo.com" 
                            style="padding-left: 44px !important;"
+                           autocomplete="email"
                            class="apple-input text-sm font-medium" />
                 </div>
             </div>
 
-            <!-- Password Input -->
+            <!-- Password Input with Show/Hide Toggle -->
             <div>
                 <div class="flex items-center justify-between mb-1.5">
                     <label class="block text-xs font-semibold text-subtitle uppercase tracking-wider">Contraseña</label>
@@ -52,16 +58,25 @@
                     <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; pointer-events: none; z-index: 10;" class="text-muted-app">
                         <i data-lucide="lock" style="width: 16px; height: 16px;"></i>
                     </span>
-                    <input type="password" name="Password" required x-model="password" placeholder="••••••••" 
-                           style="padding-left: 44px !important;"
+                    <input :type="showPassword ? 'text' : 'password'" name="Password" required 
+                           placeholder="••••••••" 
+                           style="padding-left: 44px !important; padding-right: 44px !important;"
+                           autocomplete="current-password"
                            class="apple-input text-sm font-medium" />
+                    <button type="button" @@click="showPassword = !showPassword" 
+                            style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); z-index: 10;"
+                            class="text-muted-app hover:text-[#0071e3] transition-colors p-1 rounded-lg" 
+                            :title="showPassword ? 'Ocultar contraseña' : 'Ver contraseña'">
+                        <i x-show="!showPassword" data-lucide="eye" style="width: 16px; height: 16px;"></i>
+                        <i x-show="showPassword" data-lucide="eye-off" style="width: 16px; height: 16px;"></i>
+                    </button>
                 </div>
             </div>
 
             <!-- Remember Me -->
             <div class="flex items-center justify-between pt-1">
                 <label class="flex items-center gap-2 cursor-pointer text-xs text-subtitle">
-                    <input type="checkbox" name="Recordarme" value="true" class="rounded border-gray-300 text-[#0071e3] focus:ring-[#0071e3]" />
+                    <input type="checkbox" name="Recordarme" value="true" @(Model != null && Model.Recordarme ? "checked" : "") class="rounded border-gray-300 text-[#0071e3] focus:ring-[#0071e3]" />
                     <span>Recordar este equipo</span>
                 </label>
             </div>

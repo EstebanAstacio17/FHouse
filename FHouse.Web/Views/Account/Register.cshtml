@@ -23,8 +23,11 @@
 
         @if (!ViewData.ModelState.IsValid)
         {
-            <div class="mb-6 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs">
-                @Html.ValidationSummary(true, "", new { @class = "font-medium" })
+            <div class="mb-6 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/25 text-rose-600 dark:text-rose-400 text-xs flex items-start gap-3 shadow-sm animate-shake">
+                <i data-lucide="alert-circle" class="w-5 h-5 flex-shrink-0 mt-0.5 text-rose-500"></i>
+                <div class="flex-1 font-medium leading-relaxed">
+                    @Html.ValidationSummary(false, "", new { @class = "validation-error-list" })
+                </div>
             </div>
         }
 
