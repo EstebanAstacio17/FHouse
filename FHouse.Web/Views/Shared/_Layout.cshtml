@@ -139,14 +139,6 @@
 
                 @if (isAuth)
                 {
-                    <!-- New Transaction Button (Single line, crisp Apple Pill) -->
-                    <button type="button" x-on:click="openModalTransaccion = true; $dispatch('openModalTransaccion')" class="btn-apple-primary">
-                        <i data-lucide="plus" class="w-4 h-4 flex-shrink-0"></i>
-                        <span class="whitespace-nowrap">Nuevo Movimiento</span>
-                    </button>
-
-                    <div class="h-4 w-[1px] bg-black/10 dark:bg-white/10 hidden sm:block"></div>
-
                     <!-- User Profile Dropdown Component -->
                     <div class="relative">
                         <button type="button" @@click="openUserDropdown = !openUserDropdown" class="flex items-center gap-2 focus:outline-none">

@@ -91,30 +91,31 @@
                             :class="modoFamilia === 'nueva' ? 'bg-[#0071e3]/15 text-[#0071e3] dark:text-[#2997ff] font-bold shadow-sm' : 'text-subtitle font-medium'"
                             class="py-2 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all">
                         <i data-lucide="home" class="w-3.5 h-3.5"></i>
-                        <span>Crear Familia</span>
+                        <span>Crear Nueva Familia</span>
                     </button>
                     <button type="button" @@click="modoFamilia = 'codigo'" 
                             :class="modoFamilia === 'codigo' ? 'bg-[#0071e3]/15 text-[#0071e3] dark:text-[#2997ff] font-bold shadow-sm' : 'text-subtitle font-medium'"
                             class="py-2 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all">
                         <i data-lucide="key" class="w-3.5 h-3.5"></i>
-                        <span>Tengo un Código</span>
+                        <span>Unirme con Código</span>
                     </button>
                 </div>
 
                 <!-- Input Nombre de Familia -->
                 <div x-show="modoFamilia === 'nueva'" x-transition>
                     <label class="block text-xs font-medium text-subtitle mb-1">Nombre de tu Familia / Hogar</label>
-                    <input type="text" name="NombreFamilia" value="@(Model != null ? Model.NombreFamilia : "")" placeholder="Ej: Familia Gómez, Casa Principal..." 
+                    <input type="text" name="NombreFamilia" :disabled="modoFamilia !== 'nueva'" value="@(Model != null ? Model.NombreFamilia : "")" placeholder="Ej: Familia Gómez, Casa Principal..." 
                            class="apple-input text-sm" />
-                    <p class="text-[11px] text-muted-app mt-1">Serás el Administrador principal de este grupo.</p>
+                    <p class="text-[11px] text-muted-app mt-1">Serás el Administrador principal de este nuevo grupo familiar.</p>
                 </div>
 
                 <!-- Input Código de Invitación -->
                 <div x-show="modoFamilia === 'codigo'" x-transition style="display: none;">
                     <label class="block text-xs font-medium text-subtitle mb-1">Código de Invitación Familiar</label>
-                    <input type="text" name="CodigoInvitacion" value="@(Model != null ? Model.CodigoInvitacion : "")" placeholder="Ej: FH-GOMEZ1" 
-                           class="apple-input uppercase font-mono tracking-wider text-sm" />
-                    <p class="text-[11px] text-muted-app mt-1">Solicita este código al Administrador de tu familia.</p>
+                    <input type="text" name="CodigoInvitacion" :disabled="modoFamilia !== 'codigo'" :required="modoFamilia === 'codigo'" 
+                           value="@(Model != null ? Model.CodigoInvitacion : "")" placeholder="Ej: FH-XXXXXX" 
+                           class="apple-input uppercase font-mono tracking-wider text-sm font-bold" />
+                    <p class="text-[11px] text-muted-app mt-1">Ingresa el código proporcionado por el Administrador de tu familia.</p>
                 </div>
             </div>
 
