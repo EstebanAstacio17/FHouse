@@ -1,0 +1,108 @@
+@model FHouse.Services.DTOs.ReporteFinancieroDto
+@{
+    ViewBag.Title = "Reporte Financiero Consolidado";
+}
+
+<div class="space-y-8">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-title">Reporte Financiero</h1>
+            <p class="text-sm text-subtitle mt-1">Análisis de rentabilidad, desglose por negocio y exportación contable.</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="@Url.Action("ExportarCsv", "Reporte", new { desde = Model.Desde.ToString("yyyy-MM-dd"), hasta = Model.Hasta.ToString("yyyy-MM-dd") })" class="btn-apple-secondary text-xs sm:text-sm">
+                <i data-lucide="download" class="w-4 h-4 text-[#34c759] dark:text-[#30d158]"></i>
+                <span>Descargar CSV / Excel</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Date Range Filter Form -->
+    <form method="get" action="@Url.Action("Index", "Reporte")" class="apple-card p-5">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+            <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-subtitle mb-1.5">Fecha Desde</label>
+                <input type="date" name="desde" value="@Model.Desde.ToString("yyyy-MM-dd")" class="apple-input text-xs" />
+            </div>
+            <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-subtitle mb-1.5">Fecha Hasta</label>
+                <input type="date" name="hasta" value="@Model.Hasta.ToString("yyyy-MM-dd")" class="apple-input text-xs" />
+            </div>
+            <div>
+                <button type="submit" class="w-full btn-apple-primary justify-center text-xs py-2.5">
+                    <i data-lucide="calendar" class="w-4 h-4"></i>
+                    <span>Generar Reporte</span>
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Financial KPIs for this period -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <div class="apple-card p-6">
+            <span class="block text-xs text-subtitle uppercase font-semibold mb-2">Ingresos del Período</span>
+            <div class="text-2xl font-extrabold text-[#34c759] dark:text-[#30d158]">RD$ @Model.TotalIngresosDOP.ToString("N2")</div>
+        </div>
+
+        <div class="apple-card p-6">
+            <span class="block text-xs text-subtitle uppercase font-semibold mb-2">Gastos del Período</span>
+            <div class="text-2xl font-extrabold text-[#ff3b30] dark:text-[#ff453a]">RD$ @Model.TotalEgresosDOP.ToString("N2")</div>
+        </div>
+
+        <div class="apple-card p-6">
+            <span class="block text-xs text-subtitle uppercase font-semibold mb-2">Resultado Neto</span>
+            <div class="text-2xl font-extrabold @(Model.BalanceNetoDOP >= 0 ? "text-title" : "text-[#ff3b30] dark:text-[#ff453a]")">
+                RD$ @Model.BalanceNetoDOP.ToString("N2")
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Breakdown per Business / Income Source -->
+    <div class="apple-card overflow-hidden">
+        <div class="p-5 border-b border-black/5 dark:border-white/5">
+            <h2 class="text-base font-bold text-title tracking-tight">Desglose por Fuente / Negocio</h2>
+            <p class="text-xs text-subtitle mt-0.5">Qué negocio generó más entradas y cuál sustentó más gastos</p>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="apple-table">
+                <thead>
+                    <tr>
+                        <th>Fuente / Negocio</th>
+                        <th>Tipo</th>
+                        <th class="text-right">Ingresos</th>
+                        <th class="text-right">Gastos Sustentados</th>
+                        <th class="text-right">Margen Neto</th>
+                    </tr>
+                </thead>
+                <tbody class="text-xs">
+                    @if (Model.DesglosePorFuente == null || !Model.DesglosePorFuente.Any())
+                    {
+                        <tr>
+                            <td colspan="5" class="py-12 text-center text-muted-app">Sin datos de fuentes para este rango.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var f in Model.DesglosePorFuente)
+                        {
+                            <tr>
+                                <td class="font-semibold text-title flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full" style="background-color: @f.ColorIdentificador"></span>
+                                    <span>@f.Nombre</span>
+                                </td>
+                                <td class="text-subtitle uppercase text-[11px] font-medium">@f.Tipo</td>
+                                <td class="text-right text-[#34c759] dark:text-[#30d158] font-semibold">RD$ @f.TotalIngresosDOP.ToString("N2")</td>
+                                <td class="text-right text-[#ff3b30] dark:text-[#ff453a] font-semibold">RD$ @f.TotalEgresosDOP.ToString("N2")</td>
+                                <td class="text-right font-extrabold @(f.BalanceNetoDOP >= 0 ? "text-title" : "text-[#ff3b30] dark:text-[#ff453a]")">
+                                    RD$ @f.BalanceNetoDOP.ToString("N2")
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

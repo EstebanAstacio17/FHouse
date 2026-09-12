@@ -1,0 +1,136 @@
+@model FHouse.Services.DTOs.RegisterDto
+@{
+    ViewBag.Title = "Crear Cuenta";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="min-h-[80vh] flex items-center justify-center py-10 px-4 relative">
+    <!-- Ambient Glow Effect -->
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[520px] h-[520px] bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+    <!-- Apple ID Style Registration Card -->
+    <div class="apple-card w-full max-w-lg p-8 sm:p-10 relative shadow-2xl border border-black/10 dark:border-white/10" 
+         x-data="{ modoFamilia: '@(Model != null && !string.IsNullOrEmpty(Model.CodigoInvitacion) ? "codigo" : "nueva")' }">
+        
+        <!-- Logo & Brand Header -->
+        <div class="text-center mb-8">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#0071e3] to-[#2997ff] flex items-center justify-center font-extrabold text-white text-base shadow-lg shadow-blue-500/25 mx-auto mb-4">
+                FH
+            </div>
+            <h1 class="text-2xl font-bold tracking-tight text-title">Crear Cuenta</h1>
+            <p class="text-xs text-subtitle mt-1">Regístrate para gestionar las finanzas de tu hogar</p>
+        </div>
+
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="mb-6 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs">
+                @Html.ValidationSummary(true, "", new { @class = "font-medium" })
+            </div>
+        }
+
+        <form method="post" action="@Url.Action("Register", "Account")" class="space-y-4">
+            @Html.AntiForgeryToken()
+
+            <!-- Nombre Completo -->
+            <div>
+                <label class="block text-xs font-semibold text-subtitle uppercase tracking-wider mb-1.5">Nombre Completo</label>
+                <div class="relative flex items-center">
+                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; pointer-events: none; z-index: 10;" class="text-muted-app">
+                        <i data-lucide="user" style="width: 16px; height: 16px;"></i>
+                    </span>
+                    <input type="text" name="NombreCompleto" value="@(Model != null ? Model.NombreCompleto : "")" required placeholder="Ej: Esteban Gómez" 
+                           style="padding-left: 44px !important;"
+                           class="apple-input text-sm font-medium" />
+                </div>
+            </div>
+
+            <!-- Correo Electrónico -->
+            <div>
+                <label class="block text-xs font-semibold text-subtitle uppercase tracking-wider mb-1.5">Correo Electrónico</label>
+                <div class="relative flex items-center">
+                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; pointer-events: none; z-index: 10;" class="text-muted-app">
+                        <i data-lucide="mail" style="width: 16px; height: 16px;"></i>
+                    </span>
+                    <input type="email" name="Email" value="@(Model != null ? Model.Email : "")" required placeholder="ejemplo@correo.com" 
+                           style="padding-left: 44px !important;"
+                           class="apple-input text-sm font-medium" />
+                </div>
+            </div>
+
+            <!-- Contraseñas en Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-subtitle uppercase tracking-wider mb-1.5">Contraseña</label>
+                    <div class="relative flex items-center">
+                        <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; pointer-events: none; z-index: 10;" class="text-muted-app">
+                            <i data-lucide="lock" style="width: 16px; height: 16px;"></i>
+                        </span>
+                        <input type="password" name="Password" required placeholder="••••••••" 
+                               style="padding-left: 44px !important;"
+                               class="apple-input text-sm font-medium" />
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-subtitle uppercase tracking-wider mb-1.5">Confirmar Contraseña</label>
+                    <div class="relative flex items-center">
+                        <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; pointer-events: none; z-index: 10;" class="text-muted-app">
+                            <i data-lucide="lock" style="width: 16px; height: 16px;"></i>
+                        </span>
+                        <input type="password" name="ConfirmPassword" required placeholder="••••••••" 
+                               style="padding-left: 44px !important;"
+                               class="apple-input text-sm font-medium" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Segmented Control: Nueva Familia vs Código de Invitación -->
+            <div class="pt-2">
+                <label class="block text-xs font-semibold text-subtitle uppercase tracking-wider mb-2">Pertenencia Familiar</label>
+                <div class="grid grid-cols-2 p-1 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 mb-3">
+                    <button type="button" @@click="modoFamilia = 'nueva'" 
+                            :class="modoFamilia === 'nueva' ? 'bg-[#0071e3]/15 text-[#0071e3] dark:text-[#2997ff] font-bold shadow-sm' : 'text-subtitle font-medium'"
+                            class="py-2 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all">
+                        <i data-lucide="home" class="w-3.5 h-3.5"></i>
+                        <span>Crear Familia</span>
+                    </button>
+                    <button type="button" @@click="modoFamilia = 'codigo'" 
+                            :class="modoFamilia === 'codigo' ? 'bg-[#0071e3]/15 text-[#0071e3] dark:text-[#2997ff] font-bold shadow-sm' : 'text-subtitle font-medium'"
+                            class="py-2 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all">
+                        <i data-lucide="key" class="w-3.5 h-3.5"></i>
+                        <span>Tengo un Código</span>
+                    </button>
+                </div>
+
+                <!-- Input Nombre de Familia -->
+                <div x-show="modoFamilia === 'nueva'" x-transition>
+                    <label class="block text-xs font-medium text-subtitle mb-1">Nombre de tu Familia / Hogar</label>
+                    <input type="text" name="NombreFamilia" value="@(Model != null ? Model.NombreFamilia : "")" placeholder="Ej: Familia Gómez, Casa Principal..." 
+                           class="apple-input text-sm" />
+                    <p class="text-[11px] text-muted-app mt-1">Serás el Administrador principal de este grupo.</p>
+                </div>
+
+                <!-- Input Código de Invitación -->
+                <div x-show="modoFamilia === 'codigo'" x-transition style="display: none;">
+                    <label class="block text-xs font-medium text-subtitle mb-1">Código de Invitación Familiar</label>
+                    <input type="text" name="CodigoInvitacion" value="@(Model != null ? Model.CodigoInvitacion : "")" placeholder="Ej: FH-GOMEZ1" 
+                           class="apple-input uppercase font-mono tracking-wider text-sm" />
+                    <p class="text-[11px] text-muted-app mt-1">Solicita este código al Administrador de tu familia.</p>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="w-full btn-apple-primary py-3 text-sm font-semibold justify-center shadow-lg shadow-blue-500/20 mt-4">
+                <span>Registrarme y Comenzar</span>
+                <i data-lucide="check" class="w-4 h-4"></i>
+            </button>
+        </form>
+
+        <!-- Footer link to login -->
+        <div class="mt-6 pt-6 border-t border-black/5 dark:border-white/5 text-center text-xs text-subtitle">
+            ¿Ya tienes una cuenta registrada? 
+            <a href="@Url.Action("Login", "Account")" class="text-[#0071e3] dark:text-[#2997ff] font-semibold hover:underline ml-1">
+                Iniciar Sesión
+            </a>
+        </div>
+    </div>
+</div>

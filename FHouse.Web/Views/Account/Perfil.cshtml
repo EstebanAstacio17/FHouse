@@ -1,0 +1,185 @@
+@model FHouse.Services.DTOs.UsuarioPerfilDto
+@{
+    ViewBag.Title = "Mi Perfil";
+}
+
+<div class="space-y-8 max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-title">Mi Cuenta y Perfil</h1>
+            <p class="text-sm text-subtitle mt-1">Actualiza tus datos personales, credenciales de acceso y configuración de cuenta.</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="@Url.Action("Index", "Usuario")" class="btn-apple-secondary text-xs">
+                <i data-lucide="users" class="w-4 h-4"></i>
+                <span>Gestionar Familia</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Profile Overview Card -->
+    <div class="apple-card p-6 sm:p-8 relative overflow-hidden">
+        <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+            <div class="w-20 h-20 rounded-2xl bg-gradient-to-tr from-[#0071e3] to-[#2997ff] text-white flex items-center justify-center text-2xl font-extrabold shadow-lg shadow-blue-500/25 flex-shrink-0">
+                @(!string.IsNullOrEmpty(Model.NombreCompleto) && Model.NombreCompleto.Length >= 2 ? Model.NombreCompleto.Substring(0, 2).ToUpper() : "FH")
+            </div>
+
+            <div class="flex-1 text-center sm:text-left space-y-4">
+                <div>
+                    <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-1">
+                        <h2 class="text-xl font-bold text-title">@Model.NombreCompleto</h2>
+                        <span class="apple-badge @(Model.Rol == "Admin" ? "bg-[#0071e3]/15 text-[#0071e3] dark:text-[#2997ff] border border-[#0071e3]/30" : "badge-neutral")">
+                            @Model.Rol
+                        </span>
+                    </div>
+                    <p class="text-xs text-subtitle">@Model.Email</p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-black/5 dark:border-white/5 text-xs">
+                    <div>
+                        <span class="block text-subtitle font-medium uppercase text-[10px]">Familia</span>
+                        <span class="font-bold text-title text-sm">@Model.NombreFamilia</span>
+                    </div>
+
+                    <div>
+                        <span class="block text-subtitle font-medium uppercase text-[10px]">Teléfono</span>
+                        <span class="font-medium text-title text-sm">@(string.IsNullOrWhiteSpace(Model.PhoneNumber) ? "No especificado" : Model.PhoneNumber)</span>
+                    </div>
+
+                    <div>
+                        <span class="block text-subtitle font-medium uppercase text-[10px]">Miembro Desde</span>
+                        <span class="text-title font-medium">@Model.FechaRegistro.ToString("dd MMMM yyyy")</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forms Section: 2 Columns Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <!-- Update Personal Info Form -->
+        <div class="apple-card p-6 sm:p-7 flex flex-col justify-between">
+            <div>
+                <div class="flex items-center gap-3 mb-5">
+                    <div class="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+                        <i data-lucide="user-check" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-base text-title">Datos Personales</h3>
+                        <p class="text-xs text-subtitle">Actualiza tu nombre y correo de acceso.</p>
+                    </div>
+                </div>
+
+                @using (Html.BeginForm("ActualizarPerfil", "Account", FormMethod.Post, new { @class = "space-y-4" }))
+                {
+                    @Html.AntiForgeryToken()
+
+                    <div>
+                        <label class="block text-xs font-semibold text-subtitle mb-1.5" for="NombreCompleto">Nombre Completo</label>
+                        <input type="text" id="NombreCompleto" name="NombreCompleto" value="@Model.NombreCompleto" required maxlength="100"
+                               class="apple-input w-full text-sm font-medium" placeholder="Ej. Juan Pérez" />
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-subtitle mb-1.5" for="Email">Correo Electrónico</label>
+                        <input type="email" id="Email" name="Email" value="@Model.Email" required maxlength="150"
+                               class="apple-input w-full text-sm font-medium" placeholder="correo@ejemplo.com" />
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-subtitle mb-1.5" for="PhoneNumber">Teléfono / WhatsApp (Opcional)</label>
+                        <input type="tel" id="PhoneNumber" name="PhoneNumber" value="@Model.PhoneNumber" maxlength="20"
+                               class="apple-input w-full text-sm font-medium" placeholder="+1 (809) 555-0123" />
+                    </div>
+
+                    <div class="pt-2">
+                        <button type="submit" class="btn-apple-primary w-full justify-center text-xs py-2.5">
+                            <i data-lucide="save" class="w-4 h-4"></i>
+                            <span>Guardar Cambios</span>
+                        </button>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Change Password Form -->
+        <div class="apple-card p-6 sm:p-7 flex flex-col justify-between">
+            <div>
+                <div class="flex items-center gap-3 mb-5">
+                    <div class="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                        <i data-lucide="lock" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-base text-title">Seguridad y Contraseña</h3>
+                        <p class="text-xs text-subtitle">Modifica tu clave de acceso al sistema.</p>
+                    </div>
+                </div>
+
+                @using (Html.BeginForm("CambiarPassword", "Account", FormMethod.Post, new { @class = "space-y-4" }))
+                {
+                    @Html.AntiForgeryToken()
+
+                    <div>
+                        <label class="block text-xs font-semibold text-subtitle mb-1.5" for="PasswordActual">Contraseña Actual</label>
+                        <input type="password" id="PasswordActual" name="PasswordActual" required minlength="6"
+                               class="apple-input w-full text-sm font-medium" placeholder="••••••••" />
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-subtitle mb-1.5" for="NuevoPassword">Nueva Contraseña</label>
+                        <input type="password" id="NuevoPassword" name="NuevoPassword" required minlength="6"
+                               class="apple-input w-full text-sm font-medium" placeholder="Mínimo 6 caracteres" />
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-subtitle mb-1.5" for="ConfirmarPassword">Confirmar Nueva Contraseña</label>
+                        <input type="password" id="ConfirmarPassword" name="ConfirmarPassword" required minlength="6"
+                               class="apple-input w-full text-sm font-medium" placeholder="Repite la nueva contraseña" />
+                    </div>
+
+                    <div class="pt-2">
+                        <button type="submit" class="btn-apple-secondary w-full justify-center text-xs py-2.5">
+                            <i data-lucide="key" class="w-4 h-4"></i>
+                            <span>Actualizar Contraseña</span>
+                        </button>
+                    </div>
+                }
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Quick Shortcuts Card -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div class="apple-card p-6 flex flex-col justify-between">
+            <div>
+                <div class="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center mb-3">
+                    <i data-lucide="users" class="w-5 h-5"></i>
+                </div>
+                <h3 class="font-bold text-base text-title mb-1">Miembros de tu Hogar</h3>
+                <p class="text-xs text-subtitle mb-4">Gestiona, habilita, inhabilita y actualiza los roles de cada integrante.</p>
+            </div>
+            <a href="@Url.Action("Index", "Usuario")" class="btn-apple-secondary text-xs self-start">
+                <span>Gestionar Miembros</span>
+                <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+            </a>
+        </div>
+
+        <div class="apple-card p-6 flex flex-col justify-between">
+            <div>
+                <div class="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-3">
+                    <i data-lucide="shield-check" class="w-5 h-5"></i>
+                </div>
+                <h3 class="font-bold text-base text-title mb-1">Seguridad y Auditoría</h3>
+                <p class="text-xs text-subtitle mb-4">Revisa los registros inmutables de auditoría de cada movimiento financiero.</p>
+            </div>
+            <a href="@Url.Action("Index", "Configuracion")" class="btn-apple-secondary text-xs self-start">
+                <span>Ver Registro de Auditoría</span>
+                <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+            </a>
+        </div>
+    </div>
+</div>
+

@@ -1,0 +1,374 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* ==========================================================================
+   Apple Design System & Theme Engine (Apple.com / Apple Wallet Standard)
+   ========================================================================== */
+
+:root {
+  /* Dark Theme (Default Apple Pro OLED Space Black) */
+  --bg-app: #000000;
+  --bg-subtle: #0c0c0e;
+  --bg-card: #161618;
+  --bg-card-elevated: #1c1c1e;
+  --bg-card-hover: #242426;
+  --bg-input: #1c1c1e;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --border-focus: #2997ff;
+  
+  --text-primary: #f5f5f7;
+  --text-secondary: #86868b;
+  --text-tertiary: #636366;
+  --text-muted: #48484a;
+
+  --apple-blue: #2997ff;
+  --apple-blue-hover: #0077ed;
+  --apple-green: #30d158;
+  --apple-red: #ff453a;
+  --apple-amber: #ff9f0a;
+  --apple-purple: #bf5af2;
+  --apple-indigo: #5e5ce6;
+
+  --nav-bg: rgba(22, 22, 24, 0.82);
+  --nav-border: rgba(255, 255, 255, 0.08);
+  --modal-bg: rgba(28, 28, 30, 0.96);
+  --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --wallet-card-bg: linear-gradient(135deg, #1c1c1e 0%, #0d0d0e 100%);
+  --wallet-card-border: rgba(255, 255, 255, 0.12);
+  --table-header-bg: rgba(255, 255, 255, 0.02);
+  --table-row-hover: rgba(255, 255, 255, 0.025);
+}
+
+html.light {
+  /* Light Theme (Apple System Gray 6 & Pure White) */
+  --bg-app: #f5f5f7;
+  --bg-subtle: #ebebf0;
+  --bg-card: #ffffff;
+  --bg-card-elevated: #ffffff;
+  --bg-card-hover: #f7f7f9;
+  --bg-input: #f5f5f7;
+  --border-subtle: rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.16);
+  --border-focus: #0071e3;
+  
+  --text-primary: #1d1d1f;
+  --text-secondary: #6e6e73;
+  --text-tertiary: #86868b;
+  --text-muted: #a1a1a6;
+
+  --apple-blue: #0071e3;
+  --apple-blue-hover: #0077ed;
+  --apple-green: #34c759;
+  --apple-red: #ff3b30;
+  --apple-amber: #ff9500;
+  --apple-purple: #af52de;
+  --apple-indigo: #5856d6;
+
+  --nav-bg: rgba(245, 245, 247, 0.85);
+  --nav-border: rgba(0, 0, 0, 0.08);
+  --modal-bg: rgba(255, 255, 255, 0.98);
+  --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  --wallet-card-bg: linear-gradient(135deg, #ffffff 0%, #f0f0f4 100%);
+  --wallet-card-border: rgba(0, 0, 0, 0.09);
+  --table-header-bg: rgba(0, 0, 0, 0.02);
+  --table-row-hover: rgba(0, 0, 0, 0.02);
+}
+
+/* Global Reset & Base Typography */
+* {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Plus Jakarta Sans", "Inter", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  letter-spacing: -0.015em;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Typography Helpers */
+.text-title {
+  color: var(--text-primary) !important;
+}
+
+.text-subtitle {
+  color: var(--text-secondary) !important;
+}
+
+.text-muted-app {
+  color: var(--text-tertiary) !important;
+}
+
+/* Header & Navigation Bar */
+.apple-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background-color: var(--nav-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid var(--nav-border);
+  transition: all 0.2s ease;
+}
+
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 980px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.nav-link:hover {
+  color: var(--text-primary);
+  background-color: var(--border-subtle);
+}
+
+.nav-link.active {
+  color: var(--text-primary);
+  font-weight: 600;
+  background-color: var(--border-subtle);
+}
+
+/* Apple Cards */
+.apple-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  box-shadow: var(--card-shadow);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.apple-card-interactive:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
+}
+
+/* Apple Wallet Titanium / Platinum Cards */
+.apple-wallet-card {
+  background: var(--wallet-card-bg);
+  border: 1px solid var(--wallet-card-border);
+  border-radius: 24px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--card-shadow);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease;
+}
+
+.apple-wallet-card:hover {
+  transform: translateY(-3px) scale(1.01);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.2);
+}
+
+/* Apple Buttons */
+.btn-apple-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: var(--apple-blue);
+  color: #ffffff !important;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 18px;
+  border-radius: 980px;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.25);
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.btn-apple-primary:hover {
+  background-color: var(--apple-blue-hover);
+  transform: scale(1.02);
+}
+
+.btn-apple-primary:active {
+  transform: scale(0.97);
+}
+
+.btn-apple-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: var(--bg-card);
+  color: var(--text-primary) !important;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 980px;
+  border: 1px solid var(--border-subtle);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  text-decoration: none;
+  transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-apple-secondary:hover {
+  background-color: var(--bg-card-hover);
+  border-color: var(--border-strong);
+  transform: scale(1.02);
+}
+
+.btn-apple-secondary:active {
+  transform: scale(0.97);
+}
+
+/* Theme Toggle Pill */
+.btn-theme-toggle {
+  width: 36px;
+  height: 36px;
+  border-radius: 980px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-theme-toggle:hover {
+  border-color: var(--border-strong);
+  transform: scale(1.06);
+}
+
+/* Apple Form Inputs */
+.apple-input,
+.apple-select,
+.apple-textarea {
+  width: 100%;
+  background-color: var(--bg-input) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 14px !important;
+  padding: 10px 14px;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.apple-input-icon-left {
+  padding-left: 42px !important;
+}
+
+.apple-input-icon-right {
+  padding-right: 42px !important;
+}
+
+.apple-input:focus,
+.apple-select:focus,
+.apple-textarea:focus {
+  border-color: var(--border-focus) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.18) !important;
+}
+
+.apple-input::placeholder,
+.apple-textarea::placeholder {
+  color: var(--text-tertiary) !important;
+}
+
+/* Apple Badges */
+.apple-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 980px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.badge-ingreso {
+  background-color: rgba(48, 209, 88, 0.14);
+  color: var(--apple-green);
+  border: 1px solid rgba(48, 209, 88, 0.25);
+}
+
+.badge-egreso {
+  background-color: rgba(255, 59, 48, 0.14);
+  color: var(--apple-red);
+  border: 1px solid rgba(255, 59, 48, 0.25);
+}
+
+.badge-neutral {
+  background-color: var(--border-subtle);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+}
+
+/* Apple Modals */
+.apple-modal {
+  background-color: var(--modal-bg);
+  backdrop-filter: blur(25px) saturate(190%);
+  -webkit-backdrop-filter: blur(25px) saturate(190%);
+  border: 1px solid var(--border-strong);
+  border-radius: 28px;
+  box-shadow: 0 30px 80px -10px rgba(0, 0, 0, 0.5);
+}
+
+/* Table Styling */
+.apple-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.apple-table th {
+  background-color: var(--table-header-bg);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.apple-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.apple-table tr:hover td {
+  background-color: var(--table-row-hover);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 980px;
+}

@@ -1,0 +1,282 @@
+@model IEnumerable<FHouse.Services.DTOs.FuenteIngresoDetalleDto>
+@{
+    ViewBag.Title = "Fuentes de Ingreso";
+}
+
+<div class="space-y-8" x-data="{ 
+    openModalFuente: false, 
+    openModalEditarFuente: false,
+    filtroEstado: 'todas',
+    fuenteEdit: { id: 0, nombre: '', tipo: '1', color: '#0071E3', descripcion: '', activo: true }
+}">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-title">Fuentes de Ingreso</h1>
+            <p class="text-sm text-subtitle mt-1">Negocios, empleos y actividades generadoras de recursos familiares.</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <!-- Filter tabs -->
+            <div class="inline-flex p-1 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 text-xs">
+                <button type="button" x-on:click="filtroEstado = 'todas'" :class="filtroEstado === 'todas' ? 'bg-white dark:bg-[#1c1c1e] text-title shadow-sm font-semibold' : 'text-subtitle hover:text-title'" class="px-3 py-1 rounded-lg transition-all">
+                    Todas
+                </button>
+                <button type="button" x-on:click="filtroEstado = 'activas'" :class="filtroEstado === 'activas' ? 'bg-white dark:bg-[#1c1c1e] text-title shadow-sm font-semibold' : 'text-subtitle hover:text-title'" class="px-3 py-1 rounded-lg transition-all">
+                    Activas
+                </button>
+                <button type="button" x-on:click="filtroEstado = 'inactivas'" :class="filtroEstado === 'inactivas' ? 'bg-white dark:bg-[#1c1c1e] text-title shadow-sm font-semibold' : 'text-subtitle hover:text-title'" class="px-3 py-1 rounded-lg transition-all">
+                    Inhabilitadas
+                </button>
+            </div>
+            <button type="button" x-on:click="openModalFuente = true" class="btn-apple-primary self-start sm:self-auto text-xs">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                <span>Nueva Fuente</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Grid of Income Sources -->
+    @if (Model == null || !Model.Any())
+    {
+        <div class="apple-card p-12 text-center max-w-xl mx-auto">
+            <div class="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-500 mx-auto flex items-center justify-center mb-3">
+                <i data-lucide="briefcase" class="w-6 h-6"></i>
+            </div>
+            <h3 class="font-bold text-base text-title mb-1">Sin fuentes registradas</h3>
+            <p class="text-xs text-subtitle max-w-sm mx-auto mb-6">Crea tu primer negocio, renta o empleo para imputar ingresos y gastos con precisión.</p>
+            <button type="button" x-on:click="openModalFuente = true" class="btn-apple-primary text-xs">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                <span>Crear Primera Fuente</span>
+            </button>
+        </div>
+    }
+    else
+    {
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            @foreach (var f in Model)
+            {
+                <div x-show="filtroEstado === 'todas' || (filtroEstado === 'activas' && @(f.Activo ? "true" : "false")) || (filtroEstado === 'inactivas' && @(!f.Activo ? "true" : "false"))"
+                     class="apple-card apple-card-interactive p-6 flex flex-col justify-between group relative overflow-hidden @(!f.Activo ? "opacity-75 grayscale-[25%]" : "")">
+                    <div class="absolute top-0 left-0 h-1.5 w-full @(f.Activo ? "" : "opacity-40")" style="background-color: @f.ColorIdentificador"></div>
+
+                    <div>
+                        <div class="flex items-center justify-between gap-3 mb-4 min-w-0">
+                            <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                                <span class="w-3.5 h-3.5 rounded-full flex-shrink-0 @(!f.Activo ? "opacity-50" : "")" style="background-color: @f.ColorIdentificador"></span>
+                                <h3 class="text-base font-bold text-title group-hover:text-[#0071e3] transition-colors truncate" title="@f.Nombre">@f.Nombre</h3>
+                            </div>
+                            <div class="flex items-center gap-1.5 flex-shrink-0">
+                                @if (f.Activo)
+                                {
+                                    <span class="apple-badge badge-neutral text-[10px] uppercase flex-shrink-0">@f.Tipo</span>
+                                }
+                                else
+                                {
+                                    <span class="apple-badge bg-amber-500/15 text-amber-500 border border-amber-500/30 text-[10px] uppercase font-semibold flex-shrink-0">Inhabilitada</span>
+                                }
+
+                                <button type="button" 
+                                        x-on:click="fuenteEdit = { id: @f.Id, nombre: '@HttpUtility.JavaScriptStringEncode(f.Nombre)', tipo: '@((int)f.Tipo)', color: '@f.ColorIdentificador', descripcion: '@HttpUtility.JavaScriptStringEncode(f.Descripcion != null ? f.Descripcion : "")', activo: @(f.Activo ? "true" : "false") }; openModalEditarFuente = true;" 
+                                        class="p-1.5 rounded-lg text-subtitle hover:text-[#0071e3] hover:bg-black/5 dark:hover:bg-white/5 transition-all flex-shrink-0"
+                                        title="Editar Fuente">
+                                    <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <p class="text-xs text-subtitle line-clamp-2 mb-6">
+                            @(string.IsNullOrEmpty(f.Descripcion) ? "Sin descripción agregada." : f.Descripcion)
+                        </p>
+
+                        <!-- Financial stats -->
+                        <div class="space-y-2.5 py-4 border-y border-black/5 dark:border-white/5 text-xs">
+                            <div class="flex items-center justify-between">
+                                <span class="text-subtitle">Ingresos Totales:</span>
+                                <span class="text-[#34c759] dark:text-[#30d158] font-semibold">RD$ @f.TotalIngresosDOP.ToString("N2")</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-subtitle">Gastos Imputados:</span>
+                                <span class="text-[#ff3b30] dark:text-[#ff453a] font-semibold">RD$ @f.TotalEgresosDOP.ToString("N2")</span>
+                            </div>
+                            <div class="flex items-center justify-between pt-2 border-t border-black/5 dark:border-white/5">
+                                <span class="text-title font-medium">Balance Neto:</span>
+                                <span class="font-extrabold text-sm @(f.BalanceNetoDOP >= 0 ? "text-[#34c759] dark:text-[#30d158]" : "text-[#ff3b30] dark:text-[#ff453a]")">
+                                    RD$ @f.BalanceNetoDOP.ToString("N2")
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer Action -->
+                    <div class="pt-5 flex items-center justify-between text-xs">
+                        <span class="text-muted-app">@f.CantidadTransacciones movimientos</span>
+                        <div class="flex items-center gap-2">
+                            @if (!f.Activo)
+                            {
+                                <form method="post" action="@Url.Action("Eliminar", "FuenteIngreso", new { id = f.Id })" class="inline" onsubmit="return confirm('¿Deseas eliminar permanentemente esta fuente de ingreso?');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn-apple-secondary text-xs text-rose-500 hover:text-rose-600 font-medium" title="Eliminar permanentemente">
+                                        <i data-lucide="trash-2" class="w-3.5 h-3.5 mr-1 inline"></i>
+                                        <span>Eliminar</span>
+                                    </button>
+                                </form>
+                                <form method="post" action="@Url.Action("Habilitar", "FuenteIngreso", new { id = f.Id })" class="inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn-apple-secondary text-xs text-emerald-500 hover:text-emerald-600 font-medium">
+                                        <i data-lucide="check-circle" class="w-3.5 h-3.5 mr-1 inline"></i>
+                                        <span>Habilitar</span>
+                                    </button>
+                                </form>
+                            }
+                            <a href="@Url.Action("Detalle", "FuenteIngreso", new { id = f.Id })" class="btn-apple-secondary text-xs">
+                                <span>Detalle</span>
+                                <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <!-- Modal: Nueva Fuente de Ingreso -->
+    <div x-show="openModalFuente" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-md flex items-center justify-center p-4" 
+         style="display: none;">
+        <div x-on:click.outside="openModalFuente = false" class="apple-modal w-full max-w-md p-6 sm:p-8 text-left relative">
+            <button type="button" x-on:click="openModalFuente = false" class="absolute top-6 right-6 text-subtitle hover:text-title">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <h3 class="text-xl font-bold text-title tracking-tight mb-1">Nueva Fuente de Ingreso</h3>
+            <p class="text-xs text-subtitle mb-6">Registra una empresa, empleo, renta o actividad económica.</p>
+
+            <form method="post" action="@Url.Action("Crear", "FuenteIngreso")">
+                @Html.AntiForgeryToken()
+
+                <div class="mb-4">
+                    <label class="block text-xs font-medium text-subtitle mb-1.5">Nombre del Negocio / Fuente</label>
+                    <input type="text" name="Nombre" required placeholder="Ej: Empresa ABC, Salario Esteban, Alquiler Apto..." 
+                           class="apple-input text-sm" />
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-xs font-medium text-subtitle mb-1.5">Tipo de Actividad</label>
+                        <select name="Tipo" class="apple-select text-sm">
+                            <option value="1">Negocio</option>
+                            <option value="2">Empleo</option>
+                            <option value="3">Renta</option>
+                            <option value="4">Inversión</option>
+                            <option value="5">Freelance</option>
+                            <option value="6">Otro</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-subtitle mb-1.5">Color Distintivo</label>
+                        <input type="color" name="ColorIdentificador" value="#0071E3" 
+                               class="apple-input h-11 p-1 cursor-pointer" />
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-xs font-medium text-subtitle mb-1.5">Descripción (Opcional)</label>
+                    <textarea name="Descripcion" rows="3" placeholder="Detalles de la operación..." 
+                              class="apple-textarea text-sm"></textarea>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-2">
+                    <button type="button" x-on:click="openModalFuente = false" class="btn-apple-secondary text-xs">Cancelar</button>
+                    <button type="submit" class="btn-apple-primary text-xs">Guardar Fuente</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Editar Fuente de Ingreso -->
+    <div x-show="openModalEditarFuente" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-md flex items-center justify-center p-4" 
+         style="display: none;">
+        <div x-on:click.outside="openModalEditarFuente = false" class="apple-modal w-full max-w-md p-6 sm:p-8 text-left relative">
+            <button type="button" x-on:click="openModalEditarFuente = false" class="absolute top-6 right-6 text-subtitle hover:text-title">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <h3 class="text-xl font-bold text-title tracking-tight mb-1">Actualizar Fuente de Ingreso</h3>
+            <p class="text-xs text-subtitle mb-6">Modifica los detalles, tipo o color de esta fuente.</p>
+
+            <form method="post" :action="'@Url.Action("Actualizar", "FuenteIngreso")/' + fuenteEdit.id">
+                @Html.AntiForgeryToken()
+
+                <div class="mb-4">
+                    <label class="block text-xs font-medium text-subtitle mb-1.5">Nombre del Negocio / Fuente</label>
+                    <input type="text" name="Nombre" x-model="fuenteEdit.nombre" required placeholder="Ej: Portadorza Corp" 
+                           class="apple-input text-sm" />
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-xs font-medium text-subtitle mb-1.5">Tipo de Actividad</label>
+                        <select name="Tipo" x-model="fuenteEdit.tipo" class="apple-select text-sm">
+                            <option value="1">Negocio</option>
+                            <option value="2">Empleo</option>
+                            <option value="3">Renta</option>
+                            <option value="4">Inversión</option>
+                            <option value="5">Freelance</option>
+                            <option value="6">Otro</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-subtitle mb-1.5">Color Distintivo</label>
+                        <input type="color" name="ColorIdentificador" x-model="fuenteEdit.color" 
+                               class="apple-input h-11 p-1 cursor-pointer" />
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-xs font-medium text-subtitle mb-1.5">Descripción (Opcional)</label>
+                    <textarea name="Descripcion" x-model="fuenteEdit.descripcion" rows="3" placeholder="Detalles de la operación..." 
+                              class="apple-textarea text-sm"></textarea>
+                </div>
+
+                <div class="p-3 mb-4 rounded-xl bg-black/5 dark:bg-white/5 text-[11px] text-subtitle flex items-start gap-2">
+                    <i data-lucide="shield-check" class="w-4 h-4 text-[#0071e3] flex-shrink-0 mt-0.5"></i>
+                    <span><strong>Protección de relaciones:</strong> Si esta fuente posee movimientos, cuentas o presupuestos asociados, el sistema la inhabilitará para proteger el historial sin alterar datos relacionados.</span>
+                </div>
+
+                <div class="flex items-center justify-between pt-2">
+                    <!-- Form to delete/inhabilitar fuente -->
+                    <button type="button" 
+                            x-on:click="if (confirm('¿Deseas dar de baja o eliminar esta fuente? Si tiene movimientos vinculados, será inhabilitada automáticamente.')) { $refs.formEliminar.submit(); }" 
+                            class="text-xs text-rose-500 hover:text-rose-600 font-medium flex items-center gap-1">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                        <span>Dar de baja / Eliminar</span>
+                    </button>
+
+                    <div class="flex items-center gap-3">
+                        <button type="button" x-on:click="openModalEditarFuente = false" class="btn-apple-secondary text-xs">Cancelar</button>
+                        <button type="submit" class="btn-apple-primary text-xs">Guardar Cambios</button>
+                    </div>
+                </div>
+            </form>
+
+            <form x-ref="formEliminar" method="post" :action="'@Url.Action("Eliminar", "FuenteIngreso")/' + fuenteEdit.id" style="display: none;">
+                @Html.AntiForgeryToken()
+            </form>
+        </div>
+    </div>
+</div>

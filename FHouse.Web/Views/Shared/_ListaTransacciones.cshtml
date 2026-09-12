@@ -1,0 +1,103 @@
+@model IEnumerable<FHouse.Services.DTOs.TransaccionDetalleDto>
+
+<tbody id="transacciones-tbody" class="text-sm">
+@if (Model == null || !Model.Any())
+{
+    <tr>
+        <td colspan="6" class="py-14 text-center">
+            <div class="flex flex-col items-center justify-center gap-2.5">
+                <div class="w-12 h-12 rounded-2xl bg-black/5 dark:bg-white/5 flex items-center justify-center text-muted-app">
+                    <i data-lucide="inbox" class="w-6 h-6"></i>
+                </div>
+                <p class="font-semibold text-title text-sm">No hay transacciones registradas</p>
+                <p class="text-xs text-subtitle">Comienza registrando tu primer ingreso o gasto.</p>
+            </div>
+        </td>
+    </tr>
+}
+else
+{
+    foreach (var item in Model)
+    {
+        <tr class="group">
+            <!-- Fecha -->
+            <td class="text-xs text-subtitle whitespace-nowrap font-medium">
+                @item.FechaTransaccion.ToString("dd MMM yyyy")
+            </td>
+
+            <!-- Concepto & Usuario -->
+            <td class="max-w-xs">
+                <div class="font-semibold text-title text-sm truncate" title="@item.Concepto">
+                    @item.Concepto
+                </div>
+                <div class="text-[11px] text-subtitle flex items-center gap-1.5 mt-0.5 truncate">
+                    <span class="truncate">Por: @(string.IsNullOrEmpty(item.NombreUsuarioRegistrador) ? "Admin" : item.NombreUsuarioRegistrador)</span>
+                    @if (!string.IsNullOrEmpty(item.NombreCategoria))
+                    {
+                        <span>•</span>
+                        <span class="text-muted-app truncate">@item.NombreCategoria</span>
+                    }
+                </div>
+            </td>
+
+            <!-- Fuente de Ingreso -->
+            <td class="max-w-[200px]">
+                @if (!string.IsNullOrEmpty(item.NombreFuenteIngreso))
+                {
+                    <span class="apple-badge bg-[#0071e3]/10 text-[#0071e3] dark:text-[#2997ff] border border-[#0071e3]/20 max-w-full truncate inline-flex items-center gap-1.5" title="@item.NombreFuenteIngreso">
+                        <span class="w-1.5 h-1.5 rounded-full bg-[#0071e3] dark:bg-[#2997ff] flex-shrink-0"></span>
+                        <span class="truncate">@item.NombreFuenteIngreso</span>
+                    </span>
+                }
+                else
+                {
+                    <span class="text-xs text-muted-app font-medium">General</span>
+                }
+            </td>
+
+            <!-- Cuenta -->
+            <td class="text-xs text-subtitle font-medium max-w-[160px] truncate" title="@(string.IsNullOrEmpty(item.NombreCuentaOrigen) ? "Sin Cuenta" : item.NombreCuentaOrigen)">
+                @(string.IsNullOrEmpty(item.NombreCuentaOrigen) ? "Sin Cuenta" : item.NombreCuentaOrigen)
+            </td>
+
+            <!-- Monto -->
+            <td class="text-right whitespace-nowrap">
+                @if (item.Tipo == FHouse.Core.Enums.TipoTransaccion.Ingreso)
+                {
+                    <div class="font-bold text-[#34c759] dark:text-[#30d158] flex items-center justify-end gap-1">
+                        <span>+@(item.Moneda == FHouse.Core.Enums.Moneda.USD ? "$" : "RD$") @item.Monto.ToString("N2")</span>
+                    </div>
+                    if (item.Moneda == FHouse.Core.Enums.Moneda.USD)
+                    {
+                        <div class="text-[10px] text-muted-app">≈ RD$ @item.MontoEnDOP.ToString("N2")</div>
+                    }
+                }
+                else
+                {
+                    <div class="font-bold text-[#ff3b30] dark:text-[#ff453a] flex items-center justify-end gap-1">
+                        <span>-@(item.Moneda == FHouse.Core.Enums.Moneda.USD ? "$" : "RD$") @item.Monto.ToString("N2")</span>
+                    </div>
+                    if (item.Moneda == FHouse.Core.Enums.Moneda.USD)
+                    {
+                        <div class="text-[10px] text-muted-app">≈ RD$ @item.MontoEnDOP.ToString("N2")</div>
+                    }
+                }
+            </td>
+
+            <!-- Acciones -->
+            <td class="text-right whitespace-nowrap">
+                <form hx-post="@Url.Action("Anular", "Transaccion", new { id = item.Id })" 
+                      hx-target="#transacciones-tbody" 
+                      hx-swap="outerHTML" 
+                      hx-confirm="¿Estás seguro de anular esta transacción? Se revertirán los saldos en las cuentas."
+                      class="inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="p-1.5 rounded-lg text-muted-app hover:text-rose-500 hover:bg-rose-500/10 transition-colors opacity-0 group-hover:opacity-100" title="Anular transacción">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </form>
+            </td>
+        </tr>
+    }
+}
+</tbody>

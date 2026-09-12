@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="FHouse.Core/FHouse.Core.csproj" />
+  <Project Path="FHouse.Infrastructure/FHouse.Infrastructure.csproj" />
+  <Project Path="FHouse.Services/FHouse.Services.csproj" />
+  <Project Path="FHouse.Tests/FHouse.Tests.csproj" />
+  <Project Path="FHouse.Web/FHouse.Web.csproj" />
+</Solution>

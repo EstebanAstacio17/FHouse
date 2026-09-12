@@ -1,0 +1,101 @@
+@model IEnumerable<FHouse.Services.DTOs.TransaccionDetalleDto>
+@{
+    ViewBag.Title = "Libro de Transacciones";
+    var filtro = (FHouse.Services.DTOs.FiltroTransaccionDto)ViewBag.Filtro;
+}
+
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-title">Transacciones</h1>
+            <p class="text-sm text-subtitle mt-1">Registro contable y trazabilidad completa de entradas y salidas.</p>
+        </div>
+        <button type="button" x-on:click="openModalTransaccion = true" class="btn-apple-primary self-start sm:self-auto">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            <span>Nueva Transacción</span>
+        </button>
+    </div>
+
+    <!-- Filters Toolbar (Apple Card) -->
+    <form method="get" action="@Url.Action("Index", "Transaccion")" class="apple-card p-5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+            <!-- Fuente -->
+            <div>
+                <label class="block text-[11px] font-semibold uppercase tracking-wider text-subtitle mb-1.5">Fuente de Ingreso</label>
+                <select name="FuenteIngresoId" class="apple-select text-xs">
+                    <option value="">Todas las Fuentes</option>
+                    @if (ViewBag.Fuentes != null)
+                    {
+                        foreach (var f in (IEnumerable<FHouse.Services.DTOs.FuenteIngresoDetalleDto>)ViewBag.Fuentes)
+                        {
+                            <option value="@f.Id" @(filtro != null && filtro.FuenteIngresoId == f.Id ? "selected" : "")>@f.Nombre</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <!-- Cuenta -->
+            <div>
+                <label class="block text-[11px] font-semibold uppercase tracking-wider text-subtitle mb-1.5">Cuenta</label>
+                <select name="CuentaId" class="apple-select text-xs">
+                    <option value="">Todas las Cuentas</option>
+                    @if (ViewBag.Cuentas != null)
+                    {
+                        foreach (var c in (IEnumerable<FHouse.Services.DTOs.CuentaDetalleDto>)ViewBag.Cuentas)
+                        {
+                            <option value="@c.Id" @(filtro != null && filtro.CuentaId == c.Id ? "selected" : "")>@c.Nombre</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <!-- Tipo -->
+            <div>
+                <label class="block text-[11px] font-semibold uppercase tracking-wider text-subtitle mb-1.5">Tipo de Movimiento</label>
+                <select name="Tipo" class="apple-select text-xs">
+                    <option value="">Ingresos y Egresos</option>
+                    <option value="1" @(filtro != null && filtro.Tipo == FHouse.Core.Enums.TipoTransaccion.Ingreso ? "selected" : "")>Solo Ingresos</option>
+                    <option value="2" @(filtro != null && filtro.Tipo == FHouse.Core.Enums.TipoTransaccion.Egreso ? "selected" : "")>Solo Egresos</option>
+                </select>
+            </div>
+
+            <!-- Fecha Desde -->
+            <div>
+                <label class="block text-[11px] font-semibold uppercase tracking-wider text-subtitle mb-1.5">Desde</label>
+                <input type="date" name="Desde" value="@(filtro != null && filtro.Desde.HasValue ? filtro.Desde.Value.ToString("yyyy-MM-dd") : "")" 
+                       class="apple-input text-xs" />
+            </div>
+
+            <!-- Botón Filtrar -->
+            <div class="flex items-end gap-2">
+                <button type="submit" class="w-full btn-apple-primary justify-center text-xs py-2.5">
+                    <i data-lucide="filter" class="w-3.5 h-3.5"></i>
+                    <span>Filtrar</span>
+                </button>
+                <a href="@Url.Action("Index", "Transaccion")" class="p-2.5 btn-apple-secondary" title="Restablecer">
+                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                </a>
+            </div>
+        </div>
+    </form>
+
+    <!-- Table of Transactions -->
+    <div class="apple-card overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="apple-table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Concepto</th>
+                        <th>Fuente / Negocio</th>
+                        <th>Cuenta</th>
+                        <th class="text-right">Monto</th>
+                        <th class="text-right"></th>
+                    </tr>
+                </thead>
+                @Html.Partial("_ListaTransacciones", Model)
+            </table>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,150 @@
+@model IEnumerable<FHouse.Services.DTOs.PresupuestoDetalleDto>
+@{
+    ViewBag.Title = "Presupuestos Mensuales";
+    int mes = ViewBag.Mes != null ? (int)ViewBag.Mes : DateTime.UtcNow.Month;
+    int anio = ViewBag.Anio != null ? (int)ViewBag.Anio : DateTime.UtcNow.Year;
+}
+
+<div class="space-y-8" x-data="{ openModalPresupuesto: false }">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-title">Presupuestos</h1>
+            <p class="text-sm text-subtitle mt-1">Control de límites de gasto mensual por categoría o fuente.</p>
+        </div>
+        <button type="button" x-on:click="openModalPresupuesto = true" class="btn-apple-primary self-start sm:self-auto">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            <span>Nuevo Presupuesto</span>
+        </button>
+    </div>
+
+    <!-- Presupuestos Grid -->
+    @if (Model == null || !Model.Any())
+    {
+        <div class="apple-card p-12 text-center max-w-xl mx-auto">
+            <div class="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-500 mx-auto flex items-center justify-center mb-3">
+                <i data-lucide="pie-chart" class="w-6 h-6"></i>
+            </div>
+            <h3 class="font-bold text-base text-title mb-1">Sin presupuestos para este mes</h3>
+            <p class="text-xs text-subtitle max-w-sm mx-auto mb-6">Establece techos de gasto por categoría para evitar desvíos financieros.</p>
+            <button type="button" x-on:click="openModalPresupuesto = true" class="btn-apple-primary text-xs">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                <span>Crear Primer Presupuesto</span>
+            </button>
+        </div>
+    }
+    else
+    {
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            @foreach (var p in Model)
+            {
+                var porcentaje = p.PorcentajeEjecutado;
+                var colorBarra = porcentaje >= 100 ? "bg-[#ff3b30] dark:bg-[#ff453a]" : (porcentaje >= 80 ? "bg-[#ff9500] dark:bg-[#ff9f0a]" : "bg-[#34c759] dark:bg-[#30d158]");
+
+                <div class="apple-card p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between gap-3 mb-3 min-w-0">
+                            <h3 class="text-base font-bold text-title truncate min-w-0 flex-1" title="@p.Nombre">@p.Nombre</h3>
+                            <span class="apple-badge @(porcentaje >= 100 ? "bg-rose-500/15 text-rose-500 border border-rose-500/30" : (porcentaje >= 80 ? "bg-amber-500/15 text-amber-500 border border-amber-500/30" : "badge-neutral")) flex-shrink-0">
+                                @porcentaje% usado
+                            </span>
+                        </div>
+
+                        <div class="flex items-center gap-2 text-xs text-subtitle mb-4">
+                            @if (!string.IsNullOrEmpty(p.NombreCategoria))
+                            {
+                                <span>Categoría: @p.NombreCategoria</span>
+                            }
+                            @if (!string.IsNullOrEmpty(p.NombreFuenteIngreso))
+                            {
+                                <span>•</span>
+                                <span>Fuente: @p.NombreFuenteIngreso</span>
+                            }
+                        </div>
+
+                        <!-- Progress Bar -->
+                        <div class="w-full h-2 rounded-full bg-black/5 dark:bg-white/10 overflow-hidden mb-3">
+                            <div class="h-full rounded-full @colorBarra transition-all duration-500" style="width: @Math.Min(porcentaje, 100)%"></div>
+                        </div>
+
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-subtitle">Ejecutado: <strong class="text-title">RD$ @p.MontoEjecutadoDOP.ToString("N2")</strong></span>
+                            <span class="text-subtitle">Límite: <strong class="text-title">RD$ @p.MontoLimite.ToString("N2")</strong></span>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <!-- Modal: Nuevo Presupuesto -->
+    <div x-show="openModalPresupuesto" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-md flex items-center justify-center p-4" 
+         style="display: none;">
+        <div x-on:click.outside="openModalPresupuesto = false" class="apple-modal w-full max-w-md p-6 sm:p-8 text-left relative">
+            <button type="button" x-on:click="openModalPresupuesto = false" class="absolute top-6 right-6 text-subtitle hover:text-title">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <h3 class="text-xl font-bold text-title tracking-tight mb-1">Nuevo Presupuesto</h3>
+            <p class="text-xs text-subtitle mb-6">Define un tope de gasto mensual.</p>
+
+            <form method="post" action="@Url.Action("Crear", "Presupuesto")">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Mes" value="@mes" />
+                <input type="hidden" name="Anio" value="@anio" />
+
+                <div class="mb-4">
+                    <label class="block text-xs font-medium text-subtitle mb-1.5">Nombre del Presupuesto</label>
+                    <input type="text" name="Nombre" required placeholder="Ej: Supermercado, Combustible, Salidas..." 
+                           class="apple-input text-sm" />
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-xs font-medium text-subtitle mb-1.5">Monto Límite (RD$)</label>
+                    <input type="number" step="0.01" min="1" name="MontoLimite" required placeholder="0.00" 
+                           class="apple-input text-lg font-bold" />
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-xs font-medium text-subtitle mb-1.5">Categoría Asociada</label>
+                    <select name="CategoriaId" class="apple-select text-sm">
+                        <option value="">-- Opcional / Todas --</option>
+                        @if (ViewBag.Categorias != null)
+                        {
+                            foreach (var c in ((IEnumerable<FHouse.Services.DTOs.CategoriaDetalleDto>)ViewBag.Categorias).Where(x => x.Activo))
+                            {
+                                <option value="@c.Id">@c.Nombre</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-xs font-medium text-subtitle mb-1.5">Fuente / Negocio (Opcional)</label>
+                    <select name="FuenteIngresoId" class="apple-select text-sm">
+                        <option value="">-- Presupuesto General Hogar --</option>
+                        @if (ViewBag.Fuentes != null)
+                        {
+                            foreach (var f in ((IEnumerable<FHouse.Services.DTOs.FuenteIngresoDetalleDto>)ViewBag.Fuentes).Where(x => x.Activo))
+                            {
+                                <option value="@f.Id">@f.Nombre</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-2">
+                    <button type="button" x-on:click="openModalPresupuesto = false" class="btn-apple-secondary text-xs">Cancelar</button>
+                    <button type="submit" class="btn-apple-primary text-xs">Establecer Presupuesto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

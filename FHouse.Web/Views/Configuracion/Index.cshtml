@@ -1,0 +1,98 @@
+@model IEnumerable<FHouse.Services.DTOs.AuditLogDetalleDto>
+@{
+    ViewBag.Title = "Configuración y Auditoría";
+    decimal tasa = ViewBag.TasaCambio;
+}
+
+<div class="space-y-8">
+    <!-- Header -->
+    <div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-title">Configuración y Auditoría</h1>
+        <p class="text-sm text-subtitle mt-1">Parámetros del sistema y trazabilidad total de operaciones.</p>
+    </div>
+
+    <!-- Currency Configuration Card -->
+    <div class="apple-card p-6">
+        <h2 class="text-base font-bold text-title mb-1">Tasa de Cambio Oficial (DOP / USD)</h2>
+        <p class="text-xs text-subtitle mb-6">Utilizada para convertir transacciones en Dólares a Pesos Dominicanos para los balances consolidados.</p>
+
+        <form hx-post="@Url.Action("ActualizarTasa", "Configuracion")" hx-target="#tasa-status" class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            @Html.AntiForgeryToken()
+            <div class="relative w-full sm:w-64">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-subtitle font-bold text-sm">RD$</span>
+                <input type="number" step="0.0001" min="1" name="tasa" value="@tasa" required 
+                       class="apple-input pl-14 font-bold text-sm" />
+            </div>
+            <button type="submit" class="btn-apple-primary text-xs">
+                <span>Guardar Nueva Tasa</span>
+            </button>
+            <div id="tasa-status" class="text-xs text-subtitle">
+                Tasa actual: RD$ @tasa.ToString("N2")
+            </div>
+        </form>
+    </div>
+
+    <!-- Audit Log Trail Table (Total Trazabilidad) -->
+    <div class="apple-card overflow-hidden">
+        <div class="p-5 border-b border-black/5 dark:border-white/5 flex items-center justify-between">
+            <div>
+                <h2 class="text-base font-bold text-title tracking-tight">Registro de Auditoría (Audit Log)</h2>
+                <p class="text-xs text-subtitle mt-0.5">Trazabilidad inmutable de inserciones, modificaciones y eliminaciones</p>
+            </div>
+            <span class="apple-badge bg-[#34c759]/15 text-[#34c759] dark:text-[#30d158] border border-[#34c759]/30">Activo (EF6 Interceptor)</span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="apple-table">
+                <thead>
+                    <tr>
+                        <th>Fecha/Hora</th>
+                        <th>Entidad</th>
+                        <th>Acción</th>
+                        <th>Usuario</th>
+                        <th>IP</th>
+                        <th>Detalles</th>
+                    </tr>
+                </thead>
+                <tbody class="text-xs">
+                    @if (Model == null || !Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="py-12 text-center text-muted-app">
+                                Sin registros de auditoría recientes.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var log in Model)
+                        {
+                            <tr>
+                                <td class="text-subtitle whitespace-nowrap font-mono text-[11px]">
+                                    @log.FechaCreacion.ToString("yyyy-MM-dd HH:mm:ss")
+                                </td>
+                                <td class="font-semibold text-title">
+                                    @log.Entidad
+                                </td>
+                                <td>
+                                    <span class="apple-badge @(log.Accion == "ADDED" ? "badge-ingreso" : (log.Accion == "MODIFIED" ? "bg-amber-500/15 text-amber-500 border border-amber-500/30" : "badge-egreso"))">
+                                        @log.Accion
+                                    </span>
+                                </td>
+                                <td class="text-title font-medium">
+                                    @log.NombreUsuario
+                                </td>
+                                <td class="text-muted-app font-mono text-[11px]">
+                                    @log.DireccionIP
+                                </td>
+                                <td class="text-subtitle max-w-xs truncate" title="@log.Detalles">
+                                    @(string.IsNullOrEmpty(log.Detalles) ? "Operación estándar" : log.Detalles)
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,241 @@
+using System;
+using System.Text;
+using System.Threading.Tasks;
+using System.Web.Mvc;
+using FHouse.Services.Contracts;
+using FHouse.Services.DTOs;
+
+namespace FHouse.Web.Controllers
+{
+    public class ReporteController : BaseController
+    {
+        private readonly IReporteService _reporteService;
+
+        public ReporteController(IReporteService reporteService)
+        {
+            _reporteService = reporteService ?? throw new ArgumentNullException(nameof(reporteService));
+        }
+
+        [HttpGet]
+        public async Task<ActionResult> Index(DateTime? desde, DateTime? hasta)
+        {
+            int familiaId = GetFamiliaId();
+            var ahora = DateTime.UtcNow;
+            var fechaDesde = desde ?? new DateTime(ahora.Year, ahora.Month, 1);
+            var fechaHasta = hasta ?? fechaDesde.AddMonths(1).AddDays(-1);
+
+            var reporte = await _reporteService.GenerarReporteAsync(familiaId, fechaDesde, fechaHasta);
+            return View(reporte.Datos);
+        }
+
+        [HttpGet]
+        public async Task<ActionResult> ExportarCsv(DateTime? desde, DateTime? hasta)
+        {
+            int familiaId = GetFamiliaId();
+            var ahora = DateTime.UtcNow;
+            var fechaDesde = desde ?? new DateTime(ahora.Year, ahora.Month, 1);
+            var fechaHasta = hasta ?? fechaDesde.AddMonths(1).AddDays(-1);
+
+            var csv = await _reporteService.ExportarCsvAsync(familiaId, fechaDesde, fechaHasta);
+            var bytes = Encoding.UTF8.GetBytes(csv);
+            return File(bytes, "text/csv", $"FHouse_Reporte_{fechaDesde:yyyyMMdd}_{fechaHasta:yyyyMMdd}.csv");
+        }
+    }
+
+    public class UsuarioController : BaseController
+    {
+        private readonly IUsuarioFamiliaService _usuarioService;
+
+        public UsuarioController(IUsuarioFamiliaService usuarioService)
+        {
+            _usuarioService = usuarioService ?? throw new ArgumentNullException(nameof(usuarioService));
+        }
+
+        [HttpGet]
+        public async Task<ActionResult> Index()
+        {
+            int familiaId = GetFamiliaId();
+            var familia = await _usuarioService.ObtenerFamiliaAsync(familiaId);
+            var miembros = await _usuarioService.ObtenerMiembrosFamiliaAsync(familiaId);
+
+            if (familia.Exitoso && familia.Datos != null)
+            {
+                Session["FamiliaNombre"] = familia.Datos.Nombre;
+                ViewBag.FamiliaNombreActual = familia.Datos.Nombre;
+            }
+
+            ViewBag.Familia = familia.Datos;
+            return View(miembros.Datos);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> ActualizarFamilia(ActualizarFamiliaDto dto)
+        {
+            int familiaId = GetFamiliaId();
+            string usuarioId = GetUsuarioId();
+            var resultado = await _usuarioService.ActualizarNombreFamiliaAsync(familiaId, dto.Nombre, usuarioId);
+
+            if (resultado.Exitoso)
+            {
+                Session["FamiliaNombre"] = dto.Nombre;
+            }
+
+            TempData[resultado.Exitoso ? "Exito" : "Error"] = resultado.Mensaje;
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> RegenerarCodigo()
+        {
+            int familiaId = GetFamiliaId();
+            string usuarioId = GetUsuarioId();
+            var resultado = await _usuarioService.RegenerarCodigoInvitacionAsync(familiaId, usuarioId);
+
+            TempData[resultado.Exitoso ? "Exito" : "Error"] = resultado.Mensaje;
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> Invitar(InvitarMiembroDto dto)
+        {
+            dto.FamiliaId = GetFamiliaId();
+            var resultado = await _usuarioService.InvitarMiembroAsync(dto);
+
+            if (IsHtmxRequest())
+            {
+                if (resultado.Exitoso)
+                {
+                    Response.Headers.Add("HX-Trigger", "miembroAgregado");
+                    var miembros = await _usuarioService.ObtenerMiembrosFamiliaAsync(dto.FamiliaId);
+                    return PartialView("_ListaMiembros", miembros.Datos);
+                }
+                Response.StatusCode = 422;
+                return PartialView("_ErroresValidacion", resultado.Errores);
+            }
+
+            TempData[resultado.Exitoso ? "Exito" : "Error"] = resultado.Mensaje;
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> CambiarRol(CambiarRolDto dto)
+        {
+            var resultado = await _usuarioService.CambiarRolAsync(dto);
+            TempData[resultado.Exitoso ? "Exito" : "Error"] = resultado.Mensaje;
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> ActualizarMiembro(ActualizarMiembroDto dto)
+        {
+            string usuarioId = GetUsuarioId();
+            var resultado = await _usuarioService.ActualizarMiembroAsync(dto, usuarioId);
+
+            if (IsHtmxRequest())
+            {
+                int familiaId = GetFamiliaId();
+                var miembros = await _usuarioService.ObtenerMiembrosFamiliaAsync(familiaId);
+                return PartialView("_ListaMiembros", miembros.Datos);
+            }
+
+            TempData[resultado.Exitoso ? "Exito" : "Error"] = resultado.Mensaje;
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> Inhabilitar(int id)
+        {
+            string usuarioId = GetUsuarioId();
+            var resultado = await _usuarioService.InhabilitarMiembroAsync(id, usuarioId);
+
+            if (IsHtmxRequest())
+            {
+                int familiaId = GetFamiliaId();
+                var miembros = await _usuarioService.ObtenerMiembrosFamiliaAsync(familiaId);
+                return PartialView("_ListaMiembros", miembros.Datos);
+            }
+
+            TempData[resultado.Exitoso ? "Exito" : "Error"] = resultado.Mensaje;
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> Habilitar(int id)
+        {
+            string usuarioId = GetUsuarioId();
+            var resultado = await _usuarioService.HabilitarMiembroAsync(id, usuarioId);
+
+            if (IsHtmxRequest())
+            {
+                int familiaId = GetFamiliaId();
+                var miembros = await _usuarioService.ObtenerMiembrosFamiliaAsync(familiaId);
+                return PartialView("_ListaMiembros", miembros.Datos);
+            }
+
+            TempData[resultado.Exitoso ? "Exito" : "Error"] = resultado.Mensaje;
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> Eliminar(int id)
+        {
+            string usuarioId = GetUsuarioId();
+            var resultado = await _usuarioService.EliminarMiembroAsync(id, usuarioId);
+
+            if (IsHtmxRequest())
+            {
+                int familiaId = GetFamiliaId();
+                var miembros = await _usuarioService.ObtenerMiembrosFamiliaAsync(familiaId);
+                return PartialView("_ListaMiembros", miembros.Datos);
+            }
+
+            TempData[resultado.Exitoso ? "Exito" : "Error"] = resultado.Mensaje;
+            return RedirectToAction("Index");
+        }
+    }
+
+    public class CategoriaController : BaseController
+    {
+        private readonly ICategoriaService _categoriaService;
+
+        public CategoriaController(ICategoriaService categoriaService)
+        {
+            _categoriaService = categoriaService ?? throw new ArgumentNullException(nameof(categoriaService));
+        }
+
+        [HttpGet]
+        public async Task<ActionResult> Index()
+        {
+            int familiaId = GetFamiliaId();
+            var categorias = await _categoriaService.ObtenerPorFamiliaAsync(familiaId);
+            return View(categorias.Datos);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> Crear(CrearCategoriaDto dto)
+        {
+            dto.FamiliaId = GetFamiliaId();
+            var resultado = await _categoriaService.CrearCategoriaAsync(dto);
+            TempData[resultado.Exitoso ? "Exito" : "Error"] = resultado.Mensaje;
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> Eliminar(int id)
+        {
+            var resultado = await _categoriaService.EliminarCategoriaAsync(id);
+            TempData[resultado.Exitoso ? "Exito" : "Error"] = resultado.Mensaje;
+            return RedirectToAction("Index");
+        }
+    }
+}

@@ -1,0 +1,94 @@
+@model IEnumerable<FHouse.Services.DTOs.MiembroFamiliaDto>
+
+<tbody id="miembros-tbody" class="text-xs">
+@if (Model == null || !Model.Any())
+{
+    <tr>
+        <td colspan="6" class="py-12 text-center text-muted-app">No hay miembros registrados en este grupo familiar.</td>
+    </tr>
+}
+else
+{
+    foreach (var m in Model)
+    {
+        <tr class="hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
+            x-show="filtroEstado === 'todos' || (filtroEstado === 'activos' && @(m.Activo ? "true" : "false")) || (filtroEstado === 'inactivos' && @(!m.Activo ? "true" : "false"))">
+            <td class="font-semibold text-title">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full @(m.Activo ? "bg-[#0071e3]/10 text-[#0071e3] dark:text-[#2997ff] border border-[#0071e3]/20" : "bg-zinc-500/10 text-zinc-500 border border-zinc-500/20") flex items-center justify-center text-xs font-bold flex-shrink-0">
+                        @(m.NombreCompleto.Length >= 2 ? m.NombreCompleto.Substring(0, 2).ToUpper() : "U")
+                    </div>
+                    <div>
+                        <div class="text-sm font-semibold @(m.Activo ? "" : "line-through text-subtitle")">@m.NombreCompleto</div>
+                        <div class="text-[11px] text-subtitle font-normal">@m.Email</div>
+                    </div>
+                </div>
+            </td>
+            <td class="text-subtitle font-medium">
+                @(string.IsNullOrEmpty(m.AliasFamiliar) ? "Familiar" : m.AliasFamiliar)
+            </td>
+            <td>
+                <span class="apple-badge @(m.Rol == FHouse.Core.Enums.RolFamilia.Admin ? "bg-[#0071e3]/15 text-[#0071e3] dark:text-[#2997ff] border border-[#0071e3]/30" : (m.Rol == FHouse.Core.Enums.RolFamilia.Contador ? "bg-[#af52de]/15 text-[#af52de] dark:text-[#bf5af2] border border-[#af52de]/30" : "badge-neutral"))">
+                    @m.Rol
+                </span>
+            </td>
+            <td>
+                @if (m.Activo)
+                {
+                    <span class="apple-badge bg-[#34c759]/15 text-[#34c759] border border-[#34c759]/30">Activo</span>
+                }
+                else
+                {
+                    <span class="apple-badge bg-[#ff9500]/15 text-[#ff9500] border border-[#ff9500]/30">Inhabilitado</span>
+                }
+            </td>
+            <td class="text-muted-app font-medium">
+                @m.FechaUnion.ToString("dd MMM yyyy")
+            </td>
+            <td class="text-right">
+                <div class="inline-flex items-center gap-1.5 justify-end">
+                    <!-- Editar Miembro -->
+                    <button type="button" 
+                            @@click="abrirEdicion(@m.Id, '@m.NombreCompleto', '@(m.AliasFamiliar ?? "")', @((int)m.Rol), @(m.Activo ? "true" : "false"))"
+                            class="p-1.5 rounded-lg text-subtitle hover:text-[#0071e3] hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                            title="Editar miembro">
+                        <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                    </button>
+
+                    @if (m.Activo)
+                    {
+                        <!-- Inhabilitar -->
+                        <form method="post" action="@Url.Action("Inhabilitar", "Usuario")" class="inline" onsubmit="return confirm('¿Deseas inhabilitar a este miembro familiar?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@m.Id" />
+                            <button type="submit" class="p-1.5 rounded-lg text-amber-500 hover:bg-amber-500/10 transition-colors" title="Inhabilitar acceso">
+                                <i data-lucide="power" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <!-- Habilitar -->
+                        <form method="post" action="@Url.Action("Habilitar", "Usuario")" class="inline" onsubmit="return confirm('¿Deseas reactivar a este miembro familiar?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@m.Id" />
+                            <button type="submit" class="p-1.5 rounded-lg text-emerald-500 hover:bg-emerald-500/10 transition-colors" title="Reactivar / Habilitar">
+                                <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </form>
+                    }
+
+                    <!-- Eliminar -->
+                    <form method="post" action="@Url.Action("Eliminar", "Usuario")" class="inline" onsubmit="return confirm('¿Eliminar a este integrante? Si posee movimientos financieros registrados se inhabilitará para proteger la auditoría contable.');">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@m.Id" />
+                        <button type="submit" class="p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/10 transition-colors" title="Eliminar miembro">
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </form>
+                </div>
+            </td>
+        </tr>
+    }
+}
+</tbody>

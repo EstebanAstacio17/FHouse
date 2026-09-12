@@ -1,0 +1,111 @@
+@model IEnumerable<FHouse.Services.DTOs.CategoriaDetalleDto>
+@{
+    ViewBag.Title = "Categorías de Ingreso y Gasto";
+}
+
+<div class="space-y-8" x-data="{ openModalCategoria: false }">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-title">Categorías</h1>
+            <p class="text-sm text-subtitle mt-1">Clasificación de conceptos de entradas y salidas.</p>
+        </div>
+        <button type="button" x-on:click="openModalCategoria = true" class="btn-apple-primary self-start sm:self-auto">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            <span>Nueva Categoría</span>
+        </button>
+    </div>
+
+    <!-- Categories Grid -->
+    @if (Model == null || !Model.Any())
+    {
+        <div class="apple-card p-12 text-center max-w-xl mx-auto">
+            <div class="w-12 h-12 rounded-2xl bg-purple-500/10 text-purple-500 mx-auto flex items-center justify-center mb-3">
+                <i data-lucide="tag" class="w-6 h-6"></i>
+            </div>
+            <h3 class="font-bold text-base text-title mb-1">Sin categorías</h3>
+            <p class="text-xs text-subtitle max-w-sm mx-auto mb-6">Crea tus propias etiquetas para organizar y segmentar cada movimiento del hogar.</p>
+            <button type="button" x-on:click="openModalCategoria = true" class="btn-apple-primary text-xs">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                <span>Crear Primera Categoría</span>
+            </button>
+        </div>
+    }
+    else
+    {
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            @foreach (var cat in Model)
+            {
+                <div class="apple-card p-5 flex items-center justify-between gap-3 group min-w-0">
+                    <div class="flex items-center gap-3 min-w-0 flex-1">
+                        <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-white shadow-sm flex-shrink-0" style="background-color: @cat.Color">
+                            <i data-lucide="tag" class="w-4 h-4"></i>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <h3 class="font-bold text-sm text-title truncate" title="@cat.Nombre">@cat.Nombre</h3>
+                            <span class="text-[11px] text-muted-app uppercase font-medium block truncate">@cat.Tipo</span>
+                        </div>
+                    </div>
+
+                    <form method="post" action="@Url.Action("Eliminar", "Categoria", new { id = cat.Id })" onsubmit="return confirm('¿Deseas dar de baja o eliminar esta categoría? Si tiene movimientos vinculados, será inhabilitada automáticamente.')" class="flex-shrink-0">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="p-2 rounded-lg text-muted-app hover:text-rose-500 hover:bg-rose-500/10 transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0" title="Eliminar / Inhabilitar categoría">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </form>
+                </div>
+            }
+        </div>
+    }
+
+    <!-- Modal: Nueva Categoria -->
+    <div x-show="openModalCategoria" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-md flex items-center justify-center p-4" 
+         style="display: none;">
+        <div x-on:click.outside="openModalCategoria = false" class="apple-modal w-full max-w-md p-6 sm:p-8 text-left relative">
+            <button type="button" x-on:click="openModalCategoria = false" class="absolute top-6 right-6 text-subtitle hover:text-title">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <h3 class="text-xl font-bold text-title tracking-tight mb-1">Nueva Categoría</h3>
+            <p class="text-xs text-subtitle mb-6">Etiqueta para agrupar gastos e ingresos.</p>
+
+            <form method="post" action="@Url.Action("Crear", "Categoria")">
+                @Html.AntiForgeryToken()
+
+                <div class="mb-4">
+                    <label class="block text-xs font-medium text-subtitle mb-1.5">Nombre de la Categoría</label>
+                    <input type="text" name="Nombre" required placeholder="Ej: Supermercado, Educación, Vehículo, Salud..." 
+                           class="apple-input text-sm" />
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label class="block text-xs font-medium text-subtitle mb-1.5">Aplica a</label>
+                        <select name="Tipo" class="apple-select text-sm">
+                            <option value="1" selected>Egreso (Gasto)</option>
+                            <option value="2">Ingreso</option>
+                            <option value="3">Ambos</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-subtitle mb-1.5">Color</label>
+                        <input type="color" name="Color" value="#0071E3" class="apple-input h-11 p-1 cursor-pointer" />
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-2">
+                    <button type="button" x-on:click="openModalCategoria = false" class="btn-apple-secondary text-xs">Cancelar</button>
+                    <button type="submit" class="btn-apple-primary text-xs">Crear Categoría</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

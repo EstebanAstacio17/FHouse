@@ -1,0 +1,7 @@
+<Project>
+  <PropertyGroup>
+    <!-- Silenciar advertencias informativas de auditoría NuGet para paquetes legacy de .NET Framework -->
+    <NoWarn>$(NoWarn);NU1901;NU1902;NU1903;NU1904</NoWarn>
+    <NuGetAudit>false</NuGetAudit>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="fh-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0062cc" />
+      <stop offset="50%" stop-color="#0071e3" />
+      <stop offset="100%" stop-color="#2997ff" />
+    </linearGradient>
+  </defs>
+  <!-- Apple-style Squircle Base -->
+  <rect x="24" y="24" width="464" height="464" rx="116" ry="116" fill="url(#fh-grad)" />
+  <!-- Subtle Top/Inner Highlight -->
+  <rect x="26" y="26" width="460" height="460" rx="114" ry="114" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="4" />
+  <!-- Typography FH centered -->
+  <text x="256" y="285" text-anchor="middle" dominant-baseline="middle" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Inter, sans-serif" font-weight="800" font-size="210" letter-spacing="-6">FH</text>
+</svg>

@@ -1,0 +1,198 @@
+@model FHouse.Services.DTOs.FuenteIngresoDetalleDto
+@{
+    ViewBag.Title = Model.Nombre + " — Detalle";
+    var transacciones = (IEnumerable<FHouse.Services.DTOs.TransaccionDetalleDto>)ViewBag.Transacciones;
+}
+
+<div class="space-y-6" x-data="{ 
+    openModalEditarFuente: false,
+    fuenteEdit: { 
+        id: @Model.Id, 
+        nombre: '@HttpUtility.JavaScriptStringEncode(Model.Nombre)', 
+        tipo: '@((int)Model.Tipo)', 
+        color: '@Model.ColorIdentificador', 
+        descripcion: '@HttpUtility.JavaScriptStringEncode(Model.Descripcion != null ? Model.Descripcion : "")' 
+    }
+}">
+    <!-- Breadcrumb & Back -->
+    <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2 text-xs text-subtitle">
+            <a href="@Url.Action("Index", "FuenteIngreso")" class="hover:text-title transition-colors">Fuentes de Ingreso</a>
+            <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+            <span class="text-title font-medium">@Model.Nombre</span>
+        </div>
+        <div class="flex items-center gap-2">
+            @if (!Model.Activo)
+            {
+                <form method="post" action="@Url.Action("Eliminar", "FuenteIngreso", new { id = Model.Id })" class="inline" onsubmit="return confirm('¿Deseas eliminar permanentemente esta fuente de ingreso?');">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn-apple-secondary text-xs text-rose-500 hover:text-rose-600 font-medium">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5 mr-1 inline"></i>
+                        <span>Eliminar Definitivamente</span>
+                    </button>
+                </form>
+                <form method="post" action="@Url.Action("Habilitar", "FuenteIngreso", new { id = Model.Id })" class="inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn-apple-secondary text-xs text-emerald-500 hover:text-emerald-600 font-medium">
+                        <i data-lucide="check-circle" class="w-3.5 h-3.5 mr-1 inline"></i>
+                        <span>Habilitar Fuente</span>
+                    </button>
+                </form>
+            }
+            <button type="button" x-on:click="openModalEditarFuente = true" class="btn-apple-secondary text-xs flex items-center gap-1.5">
+                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                <span>Editar Fuente</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Header / Overview Card -->
+    <div class="apple-card p-6 sm:p-8 relative overflow-hidden @(!Model.Activo ? "opacity-85" : "")">
+        <div class="absolute top-0 left-0 h-1.5 w-full @(Model.Activo ? "" : "opacity-40")" style="background-color: @Model.ColorIdentificador"></div>
+
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div>
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="w-4 h-4 rounded-full" style="background-color: @Model.ColorIdentificador"></span>
+                    <h1 class="text-2xl sm:text-3xl font-extrabold text-title tracking-tight">@Model.Nombre</h1>
+                    <span class="apple-badge badge-neutral uppercase text-xs">@Model.Tipo</span>
+                    @if (!Model.Activo)
+                    {
+                        <span class="apple-badge bg-amber-500/15 text-amber-500 border border-amber-500/30 uppercase text-xs font-bold">Inhabilitada</span>
+                    }
+                </div>
+                <p class="text-sm text-subtitle max-w-2xl">@(string.IsNullOrEmpty(Model.Descripcion) ? "Actividad económica del hogar." : Model.Descripcion)</p>
+            </div>
+
+            <!-- Financial Indicators -->
+            <div class="flex flex-wrap gap-4 sm:gap-6 apple-card p-4">
+                <div>
+                    <span class="block text-[11px] text-subtitle uppercase font-semibold">Total Ingresos</span>
+                    <span class="text-lg font-bold text-[#34c759] dark:text-[#30d158]">RD$ @Model.TotalIngresosDOP.ToString("N2")</span>
+                </div>
+                <div class="w-[1px] bg-black/10 dark:bg-white/10"></div>
+                <div>
+                    <span class="block text-[11px] text-subtitle uppercase font-semibold">Gastos Sustentados</span>
+                    <span class="text-lg font-bold text-[#ff3b30] dark:text-[#ff453a]">RD$ @Model.TotalEgresosDOP.ToString("N2")</span>
+                </div>
+                <div class="w-[1px] bg-black/10 dark:bg-white/10"></div>
+                <div>
+                    <span class="block text-[11px] text-subtitle uppercase font-semibold">Balance Disponible</span>
+                    <span class="text-lg font-extrabold @(Model.BalanceNetoDOP >= 0 ? "text-title" : "text-[#ff3b30] dark:text-[#ff453a]")">RD$ @Model.BalanceNetoDOP.ToString("N2")</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- History of movements linked to this source -->
+    <div class="apple-card overflow-hidden">
+        <div class="p-5 border-b border-black/5 dark:border-white/5 flex items-center justify-between">
+            <div>
+                <h2 class="text-base font-bold text-title tracking-tight">Historial de Movimientos de @Model.Nombre</h2>
+                <p class="text-xs text-subtitle mt-0.5">Entradas generadas y gastos costeados por este negocio/fuente</p>
+            </div>
+            @if (Model.Activo)
+            {
+                <button type="button" x-on:click="openModalTransaccion = true" class="btn-apple-primary text-xs">
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                    <span>Nuevo Movimiento</span>
+                </button>
+            }
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="apple-table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Concepto</th>
+                        <th>Fuente / Negocio</th>
+                        <th>Cuenta</th>
+                        <th class="text-right">Monto</th>
+                        <th class="text-right"></th>
+                    </tr>
+                </thead>
+                @Html.Partial("_ListaTransacciones", transacciones)
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal: Editar Fuente de Ingreso -->
+    <div x-show="openModalEditarFuente" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-md flex items-center justify-center p-4" 
+         style="display: none;">
+        <div x-on:click.outside="openModalEditarFuente = false" class="apple-modal w-full max-w-md p-6 sm:p-8 text-left relative">
+            <button type="button" x-on:click="openModalEditarFuente = false" class="absolute top-6 right-6 text-subtitle hover:text-title">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <h3 class="text-xl font-bold text-title tracking-tight mb-1">Actualizar @Model.Nombre</h3>
+            <p class="text-xs text-subtitle mb-6">Modifica los detalles, tipo o color de esta fuente.</p>
+
+            <form method="post" :action="'@Url.Action("Actualizar", "FuenteIngreso")/' + fuenteEdit.id">
+                @Html.AntiForgeryToken()
+
+                <div class="mb-4">
+                    <label class="block text-xs font-medium text-subtitle mb-1.5">Nombre del Negocio / Fuente</label>
+                    <input type="text" name="Nombre" x-model="fuenteEdit.nombre" required placeholder="Ej: Portadorza Corp" 
+                           class="apple-input text-sm" />
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-xs font-medium text-subtitle mb-1.5">Tipo de Actividad</label>
+                        <select name="Tipo" x-model="fuenteEdit.tipo" class="apple-select text-sm">
+                            <option value="1">Negocio</option>
+                            <option value="2">Empleo</option>
+                            <option value="3">Renta</option>
+                            <option value="4">Inversión</option>
+                            <option value="5">Freelance</option>
+                            <option value="6">Otro</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-subtitle mb-1.5">Color Distintivo</label>
+                        <input type="color" name="ColorIdentificador" x-model="fuenteEdit.color" 
+                               class="apple-input h-11 p-1 cursor-pointer" />
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-xs font-medium text-subtitle mb-1.5">Descripción (Opcional)</label>
+                    <textarea name="Descripcion" x-model="fuenteEdit.descripcion" rows="3" placeholder="Detalles de la operación..." 
+                              class="apple-textarea text-sm"></textarea>
+                </div>
+
+                <div class="p-3 mb-4 rounded-xl bg-black/5 dark:bg-white/5 text-[11px] text-subtitle flex items-start gap-2">
+                    <i data-lucide="shield-check" class="w-4 h-4 text-[#0071e3] flex-shrink-0 mt-0.5"></i>
+                    <span><strong>Protección relacional:</strong> Si la fuente tiene transacciones o cuentas asociadas, se inhabilitará para mantener el historial seguro.</span>
+                </div>
+
+                <div class="flex items-center justify-between pt-2">
+                    <button type="button" 
+                            x-on:click="if (confirm('¿Deseas dar de baja o eliminar esta fuente? Si tiene movimientos vinculados, será inhabilitada automáticamente.')) { $refs.formEliminarDetalle.submit(); }" 
+                            class="text-xs text-rose-500 hover:text-rose-600 font-medium flex items-center gap-1">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                        <span>Dar de baja / Eliminar</span>
+                    </button>
+
+                    <div class="flex items-center gap-3">
+                        <button type="button" x-on:click="openModalEditarFuente = false" class="btn-apple-secondary text-xs">Cancelar</button>
+                        <button type="submit" class="btn-apple-primary text-xs">Guardar Cambios</button>
+                    </div>
+                </div>
+            </form>
+
+            <form x-ref="formEliminarDetalle" method="post" :action="'@Url.Action("Eliminar", "FuenteIngreso")/' + fuenteEdit.id" style="display: none;">
+                @Html.AntiForgeryToken()
+            </form>
+        </div>
+    </div>
+</div>

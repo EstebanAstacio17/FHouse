@@ -1,0 +1,93 @@
+@model FHouse.Services.DTOs.LoginDto
+@{
+    ViewBag.Title = "Iniciar Sesión";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="min-h-[75vh] flex items-center justify-center py-10 px-4 relative">
+    <!-- Ambient Glow Effect -->
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[480px] h-[480px] bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+    <!-- Apple ID Style Authentication Card -->
+    <div class="apple-card w-full max-w-md p-8 sm:p-10 relative shadow-2xl border border-black/10 dark:border-white/10" x-data="{ email: '@(Model != null ? Model.Email : "")', password: '' }">
+        <!-- Logo & Brand Header -->
+        <div class="text-center mb-8">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#0071e3] to-[#2997ff] flex items-center justify-center font-extrabold text-white text-base shadow-lg shadow-blue-500/25 mx-auto mb-4">
+                FH
+            </div>
+            <h1 class="text-2xl font-bold tracking-tight text-title">Iniciar Sesión</h1>
+            <p class="text-xs text-subtitle mt-1">Accede al panel financiero de tu familia</p>
+        </div>
+
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="mb-6 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs">
+                @Html.ValidationSummary(true, "", new { @class = "font-medium" })
+            </div>
+        }
+
+        <form method="post" action="@Url.Action("Login", "Account")" class="space-y-4">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="ReturnUrl" value="@(Model != null ? Model.ReturnUrl : "")" />
+
+            <!-- Email Input -->
+            <div>
+                <label class="block text-xs font-semibold text-subtitle uppercase tracking-wider mb-1.5">Correo Electrónico</label>
+                <div class="relative flex items-center">
+                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; pointer-events: none; z-index: 10;" class="text-muted-app">
+                        <i data-lucide="mail" style="width: 16px; height: 16px;"></i>
+                    </span>
+                    <input type="email" name="Email" required x-model="email" placeholder="ejemplo@correo.com" 
+                           style="padding-left: 44px !important;"
+                           class="apple-input text-sm font-medium" />
+                </div>
+            </div>
+
+            <!-- Password Input -->
+            <div>
+                <div class="flex items-center justify-between mb-1.5">
+                    <label class="block text-xs font-semibold text-subtitle uppercase tracking-wider">Contraseña</label>
+                </div>
+                <div class="relative flex items-center">
+                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; pointer-events: none; z-index: 10;" class="text-muted-app">
+                        <i data-lucide="lock" style="width: 16px; height: 16px;"></i>
+                    </span>
+                    <input type="password" name="Password" required x-model="password" placeholder="••••••••" 
+                           style="padding-left: 44px !important;"
+                           class="apple-input text-sm font-medium" />
+                </div>
+            </div>
+
+            <!-- Remember Me -->
+            <div class="flex items-center justify-between pt-1">
+                <label class="flex items-center gap-2 cursor-pointer text-xs text-subtitle">
+                    <input type="checkbox" name="Recordarme" value="true" class="rounded border-gray-300 text-[#0071e3] focus:ring-[#0071e3]" checked />
+                    <span>Recordar este equipo</span>
+                </label>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="w-full btn-apple-primary py-3 text-sm font-semibold justify-center shadow-lg shadow-blue-500/20 mt-2">
+                <span>Continuar</span>
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </button>
+        </form>
+
+        <!-- Quick Demo Credentials Fill -->
+        <div class="mt-6 p-3 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 text-xs text-subtitle text-center">
+            <div class="font-semibold text-title mb-1">Acceso Demo Rápido:</div>
+            <button type="button" @@click="email = 'admin@fhouse.com'; password = 'Admin123!'" 
+                    class="text-[#0071e3] dark:text-[#2997ff] hover:underline font-medium text-[11px] block mx-auto">
+                admin@fhouse.com / Admin123! (Click para autorellenar)
+            </button>
+        </div>
+
+        <!-- Footer link to register -->
+        <div class="mt-6 pt-6 border-t border-black/5 dark:border-white/5 text-center text-xs text-subtitle">
+            ¿No tienes una cuenta aún? 
+            <a href="@Url.Action("Register", "Account")" class="text-[#0071e3] dark:text-[#2997ff] font-semibold hover:underline ml-1">
+                Crear cuenta o familia
+            </a>
+        </div>
+    </div>
+</div>

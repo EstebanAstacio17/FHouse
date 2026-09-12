@@ -1,0 +1,281 @@
+@model FHouse.Services.DTOs.DashboardResumenDto
+@{
+    ViewBag.Title = "Dashboard Financiero";
+}
+
+<div class="space-y-8">
+    <!-- Header / Saludo -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-title">
+                @(Model.NombreFamilia != null && Model.NombreFamilia.StartsWith("Familia", StringComparison.OrdinalIgnoreCase) ? ("Hola, " + Model.NombreFamilia) : ("Hola, Familia " + Model.NombreFamilia))
+            </h1>
+            <p class="text-sm text-subtitle mt-1">Resumen financiero consolidado en tiempo real (Multi-moneda DOP/USD).</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <div class="px-3.5 py-1.5 rounded-full apple-card border text-xs font-medium text-subtitle flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-[#30d158]"></span>
+                <span>Tasa USD: <strong class="text-title">RD$ @Model.TasaCambioActual.ToString("N2")</strong></span>
+            </div>
+            <button type="button" x-on:click="openModalTransaccion = true" class="btn-apple-primary">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                <span>Nuevo Movimiento</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Summary Metrics Cards (Apple Cards) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        <!-- Card 1: Balance Neto Mes -->
+        <div class="apple-card p-6 relative overflow-hidden">
+            <div class="flex items-center justify-between text-subtitle mb-3">
+                <span class="text-xs font-semibold uppercase tracking-wider">Balance Neto (Mes)</span>
+                <i data-lucide="wallet" class="w-4 h-4 text-[#0071e3] dark:text-[#2997ff]"></i>
+            </div>
+            <div class="text-2xl sm:text-3xl font-extrabold @(Model.BalanceNetoMesDOP >= 0 ? "text-[#34c759] dark:text-[#30d158]" : "text-[#ff3b30] dark:text-[#ff453a]") tracking-tight">
+                RD$ @Model.BalanceNetoMesDOP.ToString("N2")
+            </div>
+            <div class="text-xs text-muted-app mt-2">
+                Ingresos vs Egresos del mes en curso
+            </div>
+        </div>
+
+        <!-- Card 2: Ingresos Mes -->
+        <div class="apple-card p-6 relative overflow-hidden">
+            <div class="flex items-center justify-between text-subtitle mb-3">
+                <span class="text-xs font-semibold uppercase tracking-wider">Ingresos del Mes</span>
+                <i data-lucide="arrow-down-left" class="w-4 h-4 text-[#34c759] dark:text-[#30d158]"></i>
+            </div>
+            <div class="text-2xl sm:text-3xl font-extrabold text-title tracking-tight">
+                RD$ @Model.TotalIngresosMesDOP.ToString("N2")
+            </div>
+            <div class="text-xs text-[#34c759] dark:text-[#30d158] mt-2 flex items-center gap-1 font-medium">
+                <i data-lucide="trending-up" class="w-3.5 h-3.5"></i>
+                <span>Fuentes de ingreso activas</span>
+            </div>
+        </div>
+
+        <!-- Card 3: Egresos Mes -->
+        <div class="apple-card p-6 relative overflow-hidden">
+            <div class="flex items-center justify-between text-subtitle mb-3">
+                <span class="text-xs font-semibold uppercase tracking-wider">Egresos del Mes</span>
+                <i data-lucide="arrow-up-right" class="w-4 h-4 text-[#ff3b30] dark:text-[#ff453a]"></i>
+            </div>
+            <div class="text-2xl sm:text-3xl font-extrabold text-title tracking-tight">
+                RD$ @Model.TotalEgresosMesDOP.ToString("N2")
+            </div>
+            <div class="text-xs text-muted-app mt-2">
+                Gastos operativos y familiares
+            </div>
+        </div>
+
+        <!-- Card 4: Saldo en Cuentas -->
+        <div class="apple-card p-6 relative overflow-hidden">
+            <div class="flex items-center justify-between text-subtitle mb-3">
+                <span class="text-xs font-semibold uppercase tracking-wider">Disponibilidad en Cuentas</span>
+                <i data-lucide="credit-card" class="w-4 h-4 text-[#af52de] dark:text-[#bf5af2]"></i>
+            </div>
+            <div class="text-xl sm:text-2xl font-bold text-title tracking-tight">
+                RD$ @Model.SaldoTotalCuentasDOP.ToString("N2")
+            </div>
+            <div class="text-xs text-subtitle mt-1 font-semibold">
+                + $ @Model.SaldoTotalCuentasUSD.ToString("N2") USD
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts & Sources Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Chart: Flujo Mensual (2 Columns) -->
+        <div class="lg:col-span-2 apple-card p-6">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h2 class="text-base font-bold text-title tracking-tight">Histórico de Flujo de Caja</h2>
+                    <p class="text-xs text-subtitle mt-0.5">Ingresos vs Gastos últimos 6 meses (RD$)</p>
+                </div>
+            </div>
+            <div class="h-64 w-full">
+                <canvas id="flujoMensualChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Distribution by Category (1 Column) -->
+        <div class="apple-card p-6 flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-base font-bold text-title tracking-tight">Gastos por Categoría</h2>
+                    <span class="text-xs text-muted-app">Este mes</span>
+                </div>
+                <div class="space-y-4">
+                    @if (Model.GastosPorCategoria == null || !Model.GastosPorCategoria.Any())
+                    {
+                        <div class="py-12 text-center text-xs text-muted-app">
+                            No hay gastos clasificados este mes.
+                        </div>
+                    }
+                    else
+                    {
+                        foreach (var cat in Model.GastosPorCategoria.Take(5))
+                        {
+                            <div>
+                                <div class="flex items-center justify-between text-xs mb-1.5">
+                                    <span class="text-subtitle font-medium">@cat.Categoria</span>
+                                    <span class="text-title font-semibold">RD$ @cat.TotalDOP.ToString("N2") (@cat.Porcentaje%)</span>
+                                </div>
+                                <div class="w-full h-2 rounded-full bg-black/5 dark:bg-white/10 overflow-hidden">
+                                    <div class="h-full rounded-full bg-[#0071e3]" style="width: @(cat.Porcentaje)%"></div>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+            <a href="@Url.Action("Index", "Transaccion")" class="text-xs text-[#0071e3] dark:text-[#2997ff] hover:underline font-medium flex items-center justify-end gap-1 mt-6">
+                <span>Ver desglose completo</span>
+                <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- Income Sources Quick Grid -->
+    <div class="space-y-4">
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-lg font-bold text-title tracking-tight">Fuentes de Ingreso y Negocios</h2>
+                <p class="text-xs text-subtitle">Rendimiento y saldo individual por actividad económica</p>
+            </div>
+            <a href="@Url.Action("Index", "FuenteIngreso")" class="text-xs text-[#0071e3] dark:text-[#2997ff] hover:underline font-medium">Ver todas</a>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            @if (Model.FuentesIngreso == null || !Model.FuentesIngreso.Any())
+            {
+                <div class="col-span-3 apple-card p-8 text-center text-subtitle text-sm">
+                    No tienes fuentes de ingreso registradas. <a href="@Url.Action("Index", "FuenteIngreso")" class="text-[#0071e3] underline">Agregar la primera</a>.
+                </div>
+            }
+            else
+            {
+                foreach (var f in Model.FuentesIngreso)
+                {
+                    <a href="@Url.Action("Detalle", "FuenteIngreso", new { id = f.Id })" class="apple-card apple-card-interactive p-6 group block text-decoration-none min-w-0">
+                        <div class="flex items-center justify-between gap-3 mb-3 min-w-0">
+                            <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                                <div class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: @f.ColorIdentificador"></div>
+                                <span class="font-bold text-title text-sm group-hover:text-[#0071e3] transition-colors truncate" title="@f.Nombre">@f.Nombre</span>
+                            </div>
+                            <span class="apple-badge badge-neutral text-[10px] uppercase flex-shrink-0">@f.Tipo</span>
+                        </div>
+                        <div class="text-xs text-subtitle mb-4">
+                            Balance Neto: <strong class="@(f.BalanceNetoDOP >= 0 ? "text-[#34c759] dark:text-[#30d158]" : "text-[#ff3b30] dark:text-[#ff453a]") font-bold text-sm">RD$ @f.BalanceNetoDOP.ToString("N2")</strong>
+                        </div>
+                        <div class="flex items-center justify-between text-[11px] text-muted-app pt-3 border-t border-black/5 dark:border-white/5">
+                            <span>Ingresos: RD$ @f.TotalIngresosDOP.ToString("N2")</span>
+                            <span>@f.CantidadTransacciones mov.</span>
+                        </div>
+                    </a>
+                }
+            }
+        </div>
+    </div>
+
+    <!-- Recent Transactions Table -->
+    <div class="apple-card overflow-hidden">
+        <div class="p-5 border-b border-black/5 dark:border-white/5 flex items-center justify-between">
+            <div>
+                <h2 class="text-base font-bold text-title tracking-tight">Últimos Movimientos</h2>
+                <p class="text-xs text-subtitle mt-0.5">Historial contable reciente</p>
+            </div>
+            <a href="@Url.Action("Index", "Transaccion")" class="btn-apple-secondary text-xs">
+                <span>Ver todas</span>
+                <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+            </a>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="apple-table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Concepto</th>
+                        <th>Fuente / Negocio</th>
+                        <th>Cuenta</th>
+                        <th class="text-right">Monto</th>
+                        <th class="text-right"></th>
+                    </tr>
+                </thead>
+                @Html.Partial("_ListaTransacciones", Model.TransaccionesRecientes)
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const ctx = document.getElementById('flujoMensualChart');
+        if (ctx) {
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#86868b' : '#6e6e73';
+            const gridColor = isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.04)';
+
+            const labels = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.HistoricoMensual.Select(x => x.MesNombre)));
+            const ingresos = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.HistoricoMensual.Select(x => x.IngresosDOP)));
+            const egresos = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.HistoricoMensual.Select(x => x.EgresosDOP)));
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Ingresos (RD$)',
+                            data: ingresos,
+                            borderColor: '#30d158',
+                            backgroundColor: 'rgba(48, 209, 88, 0.08)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 2,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        },
+                        {
+                            label: 'Egresos (RD$)',
+                            data: egresos,
+                            borderColor: '#ff453a',
+                            backgroundColor: 'rgba(255, 69, 58, 0.08)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 2,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: textColor,
+                                font: { size: 12, family: '-apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, sans-serif' }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: gridColor },
+                            ticks: { color: textColor }
+                        },
+                        y: {
+                            grid: { color: gridColor },
+                            ticks: { color: textColor }
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+}

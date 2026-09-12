@@ -1,0 +1,343 @@
+@model IEnumerable<FHouse.Services.DTOs.MiembroFamiliaDto>
+@{
+    ViewBag.Title = "Configuración Familiar y Miembros";
+    var fam = ViewBag.Familia as FHouse.Services.DTOs.FamiliaDetalleDto;
+    var nombreFamilia = fam != null ? fam.Nombre : (Session["FamiliaNombre"] != null ? Session["FamiliaNombre"].ToString() : "Mi Familia");
+    var codigoInvitacion = fam != null ? fam.CodigoInvitacion : "FH-000000";
+    var listaMiembros = Model != null ? Model.ToList() : new List<FHouse.Services.DTOs.MiembroFamiliaDto>();
+    var totalMiembros = listaMiembros.Count;
+    var activosCount = listaMiembros.Count(m => m.Activo);
+    var inactivosCount = listaMiembros.Count(m => !m.Activo);
+    var totalCuentas = fam != null ? fam.TotalCuentas : 1;
+    var totalFuentes = fam != null ? fam.TotalFuentes : 1;
+}
+
+<div class="space-y-8" x-data="{ 
+    openModalInvitar: false, 
+    openModalEditarFamilia: false, 
+    openModalEditarMiembro: false, 
+    miembroEdit: { id: 0, nombre: '', alias: '', rol: 3, activo: true }, 
+    filtroEstado: 'todos', 
+    copiado: false,
+    abrirEdicion(id, nombre, alias, rol, activo) {
+        this.miembroEdit = { id: id, nombre: nombre, alias: alias, rol: rol, activo: activo };
+        this.openModalEditarMiembro = true;
+    }
+}">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-title">Configuración Familiar y Miembros</h1>
+            <p class="text-sm text-subtitle mt-1">Administra la estructura de tu hogar, comparte el código de acceso y asigna permisos por rol.</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <button type="button" @@click="openModalEditarFamilia = true" class="btn-apple-secondary text-xs">
+                <i data-lucide="settings" class="w-4 h-4"></i>
+                <span>Configurar Hogar</span>
+            </button>
+            <button type="button" @@click="openModalInvitar = true" class="btn-apple-primary text-xs">
+                <i data-lucide="user-plus" class="w-4 h-4"></i>
+                <span>Nuevo Miembro</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Family Overview Banner (Apple Card) -->
+    <div class="apple-card p-6 sm:p-8 relative overflow-hidden bg-gradient-to-br from-white/80 via-white/50 to-[#0071e3]/5 dark:from-[#1c1c1e] dark:via-[#1c1c1e]/90 dark:to-[#0071e3]/10">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <!-- Left Info -->
+            <div class="space-y-3 max-w-xl">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#0071e3]/10 text-[#0071e3] dark:text-[#2997ff] text-xs font-semibold">
+                    <i data-lucide="home" class="w-3.5 h-3.5"></i>
+                    <span>Grupo Familiar Activo</span>
+                </div>
+                <h2 class="text-2xl sm:text-3xl font-bold text-title tracking-tight">@nombreFamilia</h2>
+                <p class="text-xs sm:text-sm text-subtitle leading-relaxed">
+                    Este es el espacio financiero centralizado para tu hogar. Todos los miembros agregados o que ingresen con tu código compartirán la visualización de presupuestos, transacciones y cuentas según su rol.
+                </p>
+
+                <!-- Quick Stats Pills -->
+                <div class="flex flex-wrap items-center gap-3 pt-2 text-xs">
+                    <div class="px-3.5 py-1.5 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 flex items-center gap-2">
+                        <i data-lucide="users" class="w-3.5 h-3.5 text-[#0071e3]"></i>
+                        <span class="text-title font-bold">@totalMiembros</span>
+                        <span class="text-subtitle">Integrantes</span>
+                    </div>
+                    <div class="px-3.5 py-1.5 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 flex items-center gap-2">
+                        <i data-lucide="credit-card" class="w-3.5 h-3.5 text-[#34c759]"></i>
+                        <span class="text-title font-bold">@totalCuentas</span>
+                        <span class="text-subtitle">Cuentas</span>
+                    </div>
+                    <div class="px-3.5 py-1.5 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 flex items-center gap-2">
+                        <i data-lucide="briefcase" class="w-3.5 h-3.5 text-[#af52de]"></i>
+                        <span class="text-title font-bold">@totalFuentes</span>
+                        <span class="text-subtitle">Negocios / Fuentes</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Invitation Code Card -->
+            <div class="apple-card p-5 sm:p-6 bg-white/90 dark:bg-black/40 border border-black/10 dark:border-white/10 w-full lg:w-80 flex flex-col justify-between shadow-lg">
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-subtitle">Código de Invitación</span>
+                        <span class="apple-badge bg-[#34c759]/15 text-[#34c759] text-[10px]">Activo</span>
+                    </div>
+                    <div class="p-3 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 text-center my-2">
+                        <span class="font-mono text-xl font-extrabold tracking-widest text-[#0071e3] dark:text-[#2997ff] select-all">
+                            @codigoInvitacion
+                        </span>
+                    </div>
+                    <p class="text-[11px] text-muted-app mb-4 text-center">
+                        Comparte este código para que tus familiares se unan al registrarse.
+                    </p>
+                </div>
+
+                <div class="space-y-2">
+                    <button type="button" 
+                            @@click="navigator.clipboard.writeText('@codigoInvitacion'); copiado = true; setTimeout(() => copiado = false, 2500)" 
+                            class="w-full btn-apple-primary py-2.5 text-xs font-semibold justify-center">
+                        <i data-lucide="copy" class="w-3.5 h-3.5" x-show="!copiado"></i>
+                        <i data-lucide="check" class="w-3.5 h-3.5 text-white" x-show="copiado" style="display: none;"></i>
+                        <span x-text="copiado ? '¡Código Copiado!' : 'Copiar Código de Invitación'"></span>
+                    </button>
+
+                    <form method="post" action="@Url.Action("RegenerarCodigo", "Usuario")" class="w-full" onsubmit="return confirm('¿Estás seguro de regenerar el código? El código anterior dejará de funcionar.');">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="w-full py-2 rounded-xl text-[11px] font-medium text-subtitle hover:text-title hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center justify-center gap-1.5">
+                            <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+                            <span>Regenerar nuevo código</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Onboarding Guide Steps (Apple Cards Grid) -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div class="apple-card p-5 space-y-2">
+            <div class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center font-bold text-xs mb-3">1</div>
+            <h3 class="font-bold text-sm text-title">Comparte tu Código</h3>
+            <p class="text-xs text-subtitle leading-relaxed">
+                Envía tu código familiar <strong class="text-title font-mono">@codigoInvitacion</strong> a tu cónyuge, hijos o contador.
+            </p>
+        </div>
+
+        <div class="apple-card p-5 space-y-2">
+            <div class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-bold text-xs mb-3">2</div>
+            <h3 class="font-bold text-sm text-title">Registro Autónomo</h3>
+            <p class="text-xs text-subtitle leading-relaxed">
+                El familiar ingresa a <em>Crear Cuenta</em>, selecciona <em>"Tengo un Código"</em> e introduce el código familiar.
+            </p>
+        </div>
+
+        <div class="apple-card p-5 space-y-2">
+            <div class="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center font-bold text-xs mb-3">3</div>
+            <h3 class="font-bold text-sm text-title">Asigna Roles y Permisos</h3>
+            <p class="text-xs text-subtitle leading-relaxed">
+                Desde esta tabla puedes habilitar, inhabilitar, actualizar alias y cambiar roles: <strong>Admin</strong>, <strong>Contador</strong>, <strong>Miembro</strong> o <strong>Limitado</strong>.
+            </p>
+        </div>
+    </div>
+
+    <!-- Members Table (Apple Card) -->
+    <div class="apple-card overflow-hidden">
+        <div class="p-5 sm:p-6 border-b border-black/5 dark:border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+                <h3 class="font-bold text-base text-title">Integrantes de @nombreFamilia</h3>
+                <p class="text-xs text-subtitle">Lista de usuarios vinculados a este hogar y sus niveles de acceso.</p>
+            </div>
+
+            <!-- Status Filter Tabs -->
+            <div class="flex items-center gap-1.5 p-1 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 text-xs font-semibold self-start sm:self-auto">
+                <button type="button" 
+                        @@click="filtroEstado = 'todos'"
+                        :class="filtroEstado === 'todos' ? 'bg-white dark:bg-zinc-800 text-title shadow-sm' : 'text-subtitle hover:text-title'"
+                        class="px-3 py-1 rounded-lg transition-all">
+                    Todos (@totalMiembros)
+                </button>
+                <button type="button" 
+                        @@click="filtroEstado = 'activos'"
+                        :class="filtroEstado === 'activos' ? 'bg-white dark:bg-zinc-800 text-title shadow-sm' : 'text-subtitle hover:text-title'"
+                        class="px-3 py-1 rounded-lg transition-all">
+                    Activos (@activosCount)
+                </button>
+                <button type="button" 
+                        @@click="filtroEstado = 'inactivos'"
+                        :class="filtroEstado === 'inactivos' ? 'bg-white dark:bg-zinc-800 text-title shadow-sm' : 'text-subtitle hover:text-title'"
+                        class="px-3 py-1 rounded-lg transition-all">
+                    Inhabilitados (@inactivosCount)
+                </button>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="apple-table">
+                <thead>
+                    <tr>
+                        <th>Miembro</th>
+                        <th>Parentesco / Alias</th>
+                        <th>Rol Asignado</th>
+                        <th>Estado</th>
+                        <th>Fecha de Alta</th>
+                        <th class="text-right">Acciones</th>
+                    </tr>
+                </thead>
+                @Html.Partial("_ListaMiembros", Model)
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal: Editar Nombre de Familia -->
+    <div x-show="openModalEditarFamilia" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-md flex items-center justify-center p-4" 
+         style="display: none;">
+        <div x-on:click.outside="openModalEditarFamilia = false" class="apple-modal w-full max-w-md p-6 sm:p-8 text-left relative">
+            <button type="button" x-on:click="openModalEditarFamilia = false" class="absolute top-6 right-6 text-subtitle hover:text-title">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <h3 class="text-xl font-bold text-title tracking-tight mb-1">Configurar Hogar / Familia</h3>
+            <p class="text-xs text-subtitle mb-6">Actualiza el nombre representativo de tu grupo familiar.</p>
+
+            <form method="post" action="@Url.Action("ActualizarFamilia", "Usuario")">
+                @Html.AntiForgeryToken()
+
+                <div class="mb-6">
+                    <label class="block text-xs font-medium text-subtitle mb-1.5">Nombre de la Familia</label>
+                    <input type="text" name="Nombre" value="@nombreFamilia" required placeholder="Ej: Familia Gómez, Casa Central..." 
+                           class="apple-input text-sm font-semibold" />
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-2">
+                    <button type="button" x-on:click="openModalEditarFamilia = false" class="btn-apple-secondary text-xs">Cancelar</button>
+                    <button type="submit" class="btn-apple-primary text-xs">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Invitar / Agregar Miembro Directo -->
+    <div x-show="openModalInvitar" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-md flex items-center justify-center p-4" 
+         style="display: none;">
+        <div x-on:click.outside="openModalInvitar = false" class="apple-modal w-full max-w-md p-6 sm:p-8 text-left relative">
+            <button type="button" x-on:click="openModalInvitar = false" class="absolute top-6 right-6 text-subtitle hover:text-title">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <h3 class="text-xl font-bold text-title tracking-tight mb-1">Crear Acceso a Miembro</h3>
+            <p class="text-xs text-subtitle mb-6">Crea un acceso directo con rol específico para un integrante del hogar.</p>
+
+            <form method="post" action="@Url.Action("Invitar", "Usuario")">
+                @Html.AntiForgeryToken()
+
+                <div class="mb-4">
+                    <label class="block text-xs font-medium text-subtitle mb-1.5">Nombre Completo</label>
+                    <input type="text" name="NombreCompleto" required placeholder="Ej: Esteban Gómez" 
+                           class="apple-input text-sm" />
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-xs font-medium text-subtitle mb-1.5">Correo Electrónico</label>
+                    <input type="email" name="Email" required placeholder="ejemplo@correo.com" 
+                           class="apple-input text-sm" />
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label class="block text-xs font-medium text-subtitle mb-1.5">Rol en F House</label>
+                        <select name="Rol" class="apple-select text-sm">
+                            <option value="1">Admin</option>
+                            <option value="2">Contador</option>
+                            <option value="3" selected>Miembro</option>
+                            <option value="4">Limitado</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-subtitle mb-1.5">Alias / Parentesco</label>
+                        <input type="text" name="AliasFamiliar" placeholder="Ej: Padre, Hijo, Contador..." 
+                               class="apple-input text-sm" />
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-2">
+                    <button type="button" x-on:click="openModalInvitar = false" class="btn-apple-secondary text-xs">Cancelar</button>
+                    <button type="submit" class="btn-apple-primary text-xs">Crear Miembro</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Editar Miembro Familiar -->
+    <div x-show="openModalEditarMiembro" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-md flex items-center justify-center p-4" 
+         style="display: none;">
+        <div x-on:click.outside="openModalEditarMiembro = false" class="apple-modal w-full max-w-md p-6 sm:p-8 text-left relative">
+            <button type="button" x-on:click="openModalEditarMiembro = false" class="absolute top-6 right-6 text-subtitle hover:text-title">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <h3 class="text-xl font-bold text-title tracking-tight mb-1">Editar Integrante Familiar</h3>
+            <p class="text-xs text-subtitle mb-6" x-text="'Modificando datos y permisos de ' + miembroEdit.nombre"></p>
+
+            <form method="post" action="@Url.Action("ActualizarMiembro", "Usuario")">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" :value="miembroEdit.id" />
+
+                <div class="mb-4">
+                    <label class="block text-xs font-medium text-subtitle mb-1.5">Alias / Parentesco</label>
+                    <input type="text" name="AliasFamiliar" :value="miembroEdit.alias" placeholder="Ej: Esposa, Hijo Mayor, Administrador..." 
+                           class="apple-input text-sm font-medium" />
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-xs font-medium text-subtitle mb-1.5">Rol en el Hogar</label>
+                    <select name="Rol" x-model="miembroEdit.rol" class="apple-select text-sm">
+                        <option value="1">Admin</option>
+                        <option value="2">Contador</option>
+                        <option value="3">Miembro</option>
+                        <option value="4">Limitado</option>
+                    </select>
+                </div>
+
+                <div class="mb-6 p-3 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 flex items-center justify-between">
+                    <div>
+                        <span class="block text-xs font-semibold text-title">Estado de Acceso</span>
+                        <span class="text-[11px] text-subtitle" x-text="miembroEdit.activo ? 'El usuario tiene acceso activo al hogar.' : 'El usuario se encuentra inhabilitado.'"></span>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="Activo" value="true" x-model="miembroEdit.activo" class="sr-only peer" />
+                        <div class="w-11 h-6 bg-zinc-300 peer-focus:outline-none rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-zinc-600 peer-checked:bg-[#34c759]"></div>
+                    </label>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-2">
+                    <button type="button" x-on:click="openModalEditarMiembro = false" class="btn-apple-secondary text-xs">Cancelar</button>
+                    <button type="submit" class="btn-apple-primary text-xs">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
