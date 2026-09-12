@@ -29,9 +29,9 @@ namespace FHouse.Web.Controllers
         public async Task<ActionResult> Detalle(int id)
         {
             var fuente = await _fuenteService.ObtenerPorIdAsync(id);
-            if (!fuente.Exitoso)
+            if (!fuente.Exitoso || fuente.Datos == null || fuente.Datos.FamiliaId != GetFamiliaId())
             {
-                TempData["Error"] = fuente.Mensaje;
+                TempData["Error"] = "Fuente de ingreso no encontrada o no tiene permisos para acceder.";
                 return RedirectToAction("Index");
             }
 

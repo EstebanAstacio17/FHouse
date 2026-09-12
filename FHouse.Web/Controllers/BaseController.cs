@@ -40,7 +40,8 @@ namespace FHouse.Web.Controllers
                 return familiaId;
             }
 
-            return 1;
+            // FAIL-SECURE: Never fallback to default family ID — prevent tenant data leakage / IDOR
+            throw new UnauthorizedAccessException("Sesión inválida o el usuario no tiene una familia asignada.");
         }
 
         protected string GetFamiliaNombre()

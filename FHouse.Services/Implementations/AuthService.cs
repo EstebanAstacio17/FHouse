@@ -37,11 +37,34 @@ namespace FHouse.Services.Implementations
                 return ResultadoOperacion<ClaimsIdentity>.Falla("Correo electrónico o contraseña incorrectos.");
             }
 
+            // Brute-force & Lockout Protection
+            if (user.LockoutEnabled && user.LockoutEndDateUtc.HasValue && user.LockoutEndDateUtc.Value > DateTime.UtcNow)
+            {
+                var minutosRestantes = Math.Ceiling((user.LockoutEndDateUtc.Value - DateTime.UtcNow).TotalMinutes);
+                return ResultadoOperacion<ClaimsIdentity>.Falla($"Cuenta temporalmente bloqueada por múltiples intentos fallidos. Intente nuevamente en {minutosRestantes} minuto(s).");
+            }
+
             var passwordResult = _passwordHasher.VerifyHashedPassword(user.PasswordHash, dto.Password);
             if (passwordResult == PasswordVerificationResult.Failed)
             {
+                user.AccessFailedCount++;
+                if (user.AccessFailedCount >= 5)
+                {
+                    user.LockoutEnabled = true;
+                    user.LockoutEndDateUtc = DateTime.UtcNow.AddMinutes(15);
+                }
+                await _context.SaveChangesAsync();
                 return ResultadoOperacion<ClaimsIdentity>.Falla("Correo electrónico o contraseña incorrectos.");
             }
+
+            // Reset failed count on successful authentication
+            if (user.AccessFailedCount > 0 || user.LockoutEndDateUtc.HasValue)
+            {
+                user.AccessFailedCount = 0;
+                user.LockoutEndDateUtc = null;
+            }
+            user.UltimoAcceso = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
 
             // Obtener relación familiar
             var usuarioFamilia = await _context.UsuariosFamilia

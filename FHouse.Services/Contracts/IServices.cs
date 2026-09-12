@@ -14,7 +14,7 @@ namespace FHouse.Services.Contracts
         Task<ResultadoOperacion<IEnumerable<TransaccionDetalleDto>>> ObtenerTransaccionesFamiliaAsync(int familiaId, int? limit = null);
         Task<ResultadoOperacion<IEnumerable<TransaccionDetalleDto>>> ObtenerPorFuenteAsync(int fuenteId, int? limit = null);
         Task<ResultadoOperacion<IEnumerable<TransaccionDetalleDto>>> ObtenerFiltradasAsync(FiltroTransaccionDto filtro);
-        Task<ResultadoOperacion<bool>> AnularTransaccionAsync(int transaccionId, string usuarioId);
+        Task<ResultadoOperacion<bool>> AnularTransaccionAsync(int transaccionId, string usuarioId, int? familiaId = null);
     }
 
     public interface IFuenteIngresoService

@@ -11,6 +11,7 @@ namespace FHouse.Infrastructure.Identity
         public string NombreCompleto { get; set; }
         public string AvatarUrl { get; set; }
         public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;
+        public DateTime? UltimoAcceso { get; set; }
         public int? FamiliaActualId { get; set; }
 
         public async Task<ClaimsIdentity> GenerateUserIdentityAsync(UserManager<ApplicationUser> manager)

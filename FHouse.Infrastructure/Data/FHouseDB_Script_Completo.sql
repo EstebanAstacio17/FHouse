@@ -41,6 +41,7 @@ CREATE TABLE [dbo].[AspNetUsers](
     [NombreCompleto] [nvarchar](150) NULL,
     [AvatarUrl] [nvarchar](500) NULL,
     [FechaRegistro] [datetime] NOT NULL DEFAULT(GETUTCDATE()),
+    [UltimoAcceso] [datetime] NULL,
     [FamiliaActualId] [int] NULL,
     [Email] [nvarchar](256) NULL,
     [EmailConfirmed] [bit] NOT NULL DEFAULT(0),

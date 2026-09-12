@@ -176,15 +176,19 @@ namespace FHouse.Services.Implementations
             return ResultadoOperacion<IEnumerable<TransaccionDetalleDto>>.Ok(dtos);
         }
 
-        public async Task<ResultadoOperacion<bool>> AnularTransaccionAsync(int transaccionId, string usuarioId)
+        public async Task<ResultadoOperacion<bool>> AnularTransaccionAsync(int transaccionId, string usuarioId, int? familiaId = null)
         {
             try
             {
                 return await _uow.EjecutarEnTransaccionAsync(async () =>
                 {
                     var transaccion = await _uow.Transacciones.ObtenerPorIdAsync(transaccionId);
-                    if (transaccion == null)
-                        return ResultadoOperacion<bool>.Falla("Transacción no encontrada.");
+                    if (transaccion == null || !transaccion.Activo)
+                        return ResultadoOperacion<bool>.Falla("Transacción no encontrada o ya se encuentra anulada.");
+
+                    // Tenant isolation check
+                    if (familiaId.HasValue && transaccion.FamiliaId != familiaId.Value)
+                        return ResultadoOperacion<bool>.Falla("No tiene permisos para anular esta transacción.");
 
                     if (transaccion.CuentaOrigenId.HasValue)
                     {
@@ -197,6 +201,17 @@ namespace FHouse.Services.Implementations
                                 cuenta.SaldoActual -= transaccion.Monto;
 
                             _uow.Cuentas.Actualizar(cuenta);
+                        }
+                    }
+
+                    // Reverse destination account if it was a transfer
+                    if (transaccion.CuentaDestinoId.HasValue)
+                    {
+                        var cuentaDestino = await _uow.Cuentas.ObtenerPorIdAsync(transaccion.CuentaDestinoId.Value);
+                        if (cuentaDestino != null)
+                        {
+                            cuentaDestino.SaldoActual -= transaccion.Monto;
+                            _uow.Cuentas.Actualizar(cuentaDestino);
                         }
                     }
 

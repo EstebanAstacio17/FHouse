@@ -164,6 +164,12 @@ namespace FHouse.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Inhabilitar(int id)
         {
+            if (!EsAdminFamilia())
+            {
+                TempData["Error"] = "No tienes permisos de administrador para inhabilitar miembros.";
+                return RedirectToAction("Index");
+            }
+
             string usuarioId = GetUsuarioId();
             var resultado = await _usuarioService.InhabilitarMiembroAsync(id, usuarioId);
 
@@ -182,6 +188,12 @@ namespace FHouse.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Habilitar(int id)
         {
+            if (!EsAdminFamilia())
+            {
+                TempData["Error"] = "No tienes permisos de administrador para habilitar miembros.";
+                return RedirectToAction("Index");
+            }
+
             string usuarioId = GetUsuarioId();
             var resultado = await _usuarioService.HabilitarMiembroAsync(id, usuarioId);
 
@@ -200,6 +212,12 @@ namespace FHouse.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Eliminar(int id)
         {
+            if (!EsAdminFamilia())
+            {
+                TempData["Error"] = "No tienes permisos de administrador para eliminar miembros.";
+                return RedirectToAction("Index");
+            }
+
             string usuarioId = GetUsuarioId();
             var resultado = await _usuarioService.EliminarMiembroAsync(id, usuarioId);
 

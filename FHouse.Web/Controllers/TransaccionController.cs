@@ -108,8 +108,9 @@ namespace FHouse.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Anular(int id)
         {
+            int familiaId = GetFamiliaId();
             string usuarioId = GetUsuarioId();
-            var resultado = await _transaccionService.AnularTransaccionAsync(id, usuarioId);
+            var resultado = await _transaccionService.AnularTransaccionAsync(id, usuarioId, familiaId);
 
             if (IsHtmxRequest())
             {
