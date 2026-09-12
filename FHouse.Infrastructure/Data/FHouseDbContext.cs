@@ -15,6 +15,11 @@ namespace FHouse.Infrastructure.Data
 {
     public class FHouseDbContext : IdentityDbContext<ApplicationUser>
     {
+        static FHouseDbContext()
+        {
+            Database.SetInitializer<FHouseDbContext>(null);
+        }
+
         public FHouseDbContext() : base("Name=FHouseConnection", throwIfV1Schema: false)
         {
             Configuration.LazyLoadingEnabled = false;

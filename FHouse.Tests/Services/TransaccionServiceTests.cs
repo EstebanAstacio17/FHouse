@@ -5,6 +5,7 @@ using AutoMapper;
 using FluentAssertions;
 using FluentValidation;
 using FluentValidation.Results;
+using FHouse.Core.Common;
 using FHouse.Core.Entities;
 using FHouse.Core.Enums;
 using FHouse.Core.Interfaces.Repositories;
@@ -35,6 +36,12 @@ namespace FHouse.Tests.Services
             _mockUow.Setup(u => u.Transacciones).Returns(_mockTransaccionRepo.Object);
             _mockUow.Setup(u => u.Cuentas).Returns(_mockCuentaRepo.Object);
             _mockUow.Setup(u => u.Familias).Returns(_mockFamiliaRepo.Object);
+
+            _mockUow.Setup(u => u.EjecutarEnTransaccionAsync(It.IsAny<System.Func<Task<ResultadoOperacion<TransaccionDetalleDto>>>>()))
+                    .Returns<System.Func<Task<ResultadoOperacion<TransaccionDetalleDto>>>>(fn => fn());
+
+            _mockUow.Setup(u => u.EjecutarEnTransaccionAsync(It.IsAny<System.Func<Task<ResultadoOperacion<bool>>>>()))
+                    .Returns<System.Func<Task<ResultadoOperacion<bool>>>>(fn => fn());
 
             _mockMapper = new Mock<IMapper>();
             _mockValidator = new Mock<IValidator<CrearTransaccionDto>>();

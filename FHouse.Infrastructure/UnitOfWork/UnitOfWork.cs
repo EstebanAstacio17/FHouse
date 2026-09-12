@@ -59,6 +59,41 @@ namespace FHouse.Infrastructure.UnitOfWork
             return await _context.SaveChangesAsync();
         }
 
+        public async Task<TResult> EjecutarEnTransaccionAsync<TResult>(Func<Task<TResult>> accion)
+        {
+            using (var tx = _context.Database.BeginTransaction(System.Data.IsolationLevel.ReadCommitted))
+            {
+                try
+                {
+                    var resultado = await accion();
+                    tx.Commit();
+                    return resultado;
+                }
+                catch
+                {
+                    tx.Rollback();
+                    throw;
+                }
+            }
+        }
+
+        public async Task EjecutarEnTransaccionAsync(Func<Task> accion)
+        {
+            using (var tx = _context.Database.BeginTransaction(System.Data.IsolationLevel.ReadCommitted))
+            {
+                try
+                {
+                    await accion();
+                    tx.Commit();
+                }
+                catch
+                {
+                    tx.Rollback();
+                    throw;
+                }
+            }
+        }
+
         public void Dispose()
         {
             Dispose(true);

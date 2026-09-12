@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Data.Entity;
+using System.Data.Entity.Infrastructure;
 using AutoMapper;
 using FluentValidation;
 using FHouse.Core.Common;
@@ -38,69 +39,83 @@ namespace FHouse.Services.Implementations
                 return ResultadoOperacion<TransaccionDetalleDto>.Falla(validacion.Errors.Select(e => e.ErrorMessage));
             }
 
-            var familia = await _uow.Familias.ObtenerPorIdAsync(dto.FamiliaId);
-            if (familia == null)
+            try
             {
-                return ResultadoOperacion<TransaccionDetalleDto>.Falla("Familia no encontrada.");
-            }
-
-            decimal tasa = familia.TasaCambioActual > 0 ? familia.TasaCambioActual : 59.50m;
-            decimal montoDop = dto.Moneda == Moneda.USD ? dto.Monto * tasa : dto.Monto;
-
-            Cuenta cuentaOrigen = null;
-            if (dto.CuentaOrigenId.HasValue)
-            {
-                cuentaOrigen = await _uow.Cuentas.ObtenerPorIdAsync(dto.CuentaOrigenId.Value);
-                if (cuentaOrigen == null)
-                    return ResultadoOperacion<TransaccionDetalleDto>.Falla("La cuenta seleccionada no existe.");
-
-                if (dto.Tipo == TipoTransaccion.Egreso)
+                return await _uow.EjecutarEnTransaccionAsync(async () =>
                 {
-                    if (cuentaOrigen.SaldoActual < dto.Monto)
+                    var familia = await _uow.Familias.ObtenerPorIdAsync(dto.FamiliaId);
+                    if (familia == null)
                     {
-                        return ResultadoOperacion<TransaccionDetalleDto>.Falla($"Saldo insuficiente en la cuenta '{cuentaOrigen.Nombre}'. Saldo actual: {cuentaOrigen.SaldoActual:N2} {cuentaOrigen.Moneda}.");
+                        return ResultadoOperacion<TransaccionDetalleDto>.Falla("Familia no encontrada.");
                     }
-                    cuentaOrigen.SaldoActual -= dto.Monto;
-                }
-                else if (dto.Tipo == TipoTransaccion.Ingreso)
-                {
-                    cuentaOrigen.SaldoActual += dto.Monto;
-                }
-                _uow.Cuentas.Actualizar(cuentaOrigen);
+
+                    decimal tasa = familia.TasaCambioActual > 0 ? familia.TasaCambioActual : 59.50m;
+                    decimal montoDop = dto.Moneda == Moneda.USD ? dto.Monto * tasa : dto.Monto;
+
+                    Cuenta cuentaOrigen = null;
+                    if (dto.CuentaOrigenId.HasValue)
+                    {
+                        cuentaOrigen = await _uow.Cuentas.ObtenerPorIdAsync(dto.CuentaOrigenId.Value);
+                        if (cuentaOrigen == null)
+                            return ResultadoOperacion<TransaccionDetalleDto>.Falla("La cuenta seleccionada no existe.");
+
+                        if (dto.Tipo == TipoTransaccion.Egreso)
+                        {
+                            if (cuentaOrigen.SaldoActual < dto.Monto)
+                            {
+                                return ResultadoOperacion<TransaccionDetalleDto>.Falla($"Saldo insuficiente en la cuenta '{cuentaOrigen.Nombre}'. Saldo actual: {cuentaOrigen.SaldoActual:N2} {cuentaOrigen.Moneda}.");
+                            }
+                            cuentaOrigen.SaldoActual -= dto.Monto;
+                        }
+                        else if (dto.Tipo == TipoTransaccion.Ingreso)
+                        {
+                            cuentaOrigen.SaldoActual += dto.Monto;
+                        }
+                        _uow.Cuentas.Actualizar(cuentaOrigen);
+                    }
+
+                    var transaccion = _mapper.Map<Transaccion>(dto);
+                    transaccion.UsuarioRegistradorId = usuarioId;
+                    transaccion.NombreUsuarioRegistrador = nombreUsuario ?? "Usuario";
+                    transaccion.TasaCambioAplicada = dto.Moneda == Moneda.USD ? tasa : 1.0m;
+                    transaccion.MontoEnDOP = montoDop;
+                    transaccion.FechaCreacion = DateTime.UtcNow;
+
+                    await _uow.Transacciones.AgregarAsync(transaccion);
+
+                    // Registro inmutable de auditoría
+                    var log = new AuditLog
+                    {
+                        FamiliaId = dto.FamiliaId,
+                        Entidad = "Transaccion",
+                        Accion = dto.Tipo == TipoTransaccion.Ingreso ? "INGRESO" : "EGRESO",
+                        UsuarioId = usuarioId,
+                        NombreUsuario = nombreUsuario ?? "Usuario",
+                        Detalles = $"{dto.Concepto} por {dto.Monto:N2} {dto.Moneda} ({(cuentaOrigen != null ? cuentaOrigen.Nombre : "Sin cuenta")})",
+                        FechaCreacion = DateTime.UtcNow
+                    };
+                    if (_uow.AuditLogs != null)
+                    {
+                        await _uow.AuditLogs.AgregarAsync(log);
+                    }
+
+                    await _uow.GuardarCambiosAsync();
+
+                    var resultadoDto = _mapper.Map<TransaccionDetalleDto>(transaccion);
+                    if (cuentaOrigen != null)
+                        resultadoDto.NombreCuentaOrigen = cuentaOrigen.Nombre;
+
+                    return ResultadoOperacion<TransaccionDetalleDto>.Ok(resultadoDto, "Transacción registrada exitosamente.");
+                });
             }
-
-            var transaccion = _mapper.Map<Transaccion>(dto);
-            transaccion.UsuarioRegistradorId = usuarioId;
-            transaccion.NombreUsuarioRegistrador = nombreUsuario ?? "Usuario";
-            transaccion.TasaCambioAplicada = dto.Moneda == Moneda.USD ? tasa : 1.0m;
-            transaccion.MontoEnDOP = montoDop;
-            transaccion.FechaCreacion = DateTime.UtcNow;
-
-            await _uow.Transacciones.AgregarAsync(transaccion);
-
-            // Registro inmutable de auditoría
-            var log = new AuditLog
+            catch (DbUpdateConcurrencyException)
             {
-                FamiliaId = dto.FamiliaId,
-                Entidad = "Transaccion",
-                Accion = dto.Tipo == TipoTransaccion.Ingreso ? "INGRESO" : "EGRESO",
-                UsuarioId = usuarioId,
-                NombreUsuario = nombreUsuario ?? "Usuario",
-                Detalles = $"{dto.Concepto} por {dto.Monto:N2} {dto.Moneda} ({(cuentaOrigen != null ? cuentaOrigen.Nombre : "Sin cuenta")})",
-                FechaCreacion = DateTime.UtcNow
-            };
-            if (_uow.AuditLogs != null)
-            {
-                await _uow.AuditLogs.AgregarAsync(log);
+                return ResultadoOperacion<TransaccionDetalleDto>.Falla("Conflicto de concurrencia: el saldo o registro fue modificado simultáneamente por otro usuario. Por favor, intente de nuevo.");
             }
-
-            await _uow.GuardarCambiosAsync();
-
-            var resultadoDto = _mapper.Map<TransaccionDetalleDto>(transaccion);
-            if (cuentaOrigen != null)
-                resultadoDto.NombreCuentaOrigen = cuentaOrigen.Nombre;
-
-            return ResultadoOperacion<TransaccionDetalleDto>.Ok(resultadoDto, "Transacción registrada exitosamente.");
+            catch (Exception ex)
+            {
+                return ResultadoOperacion<TransaccionDetalleDto>.Falla("Error al procesar la transacción: " + ex.Message);
+            }
         }
 
         public async Task<ResultadoOperacion<TransaccionDetalleDto>> ObtenerPorIdAsync(int id)
@@ -163,45 +178,59 @@ namespace FHouse.Services.Implementations
 
         public async Task<ResultadoOperacion<bool>> AnularTransaccionAsync(int transaccionId, string usuarioId)
         {
-            var transaccion = await _uow.Transacciones.ObtenerPorIdAsync(transaccionId);
-            if (transaccion == null)
-                return ResultadoOperacion<bool>.Falla("Transacción no encontrada.");
-
-            if (transaccion.CuentaOrigenId.HasValue)
+            try
             {
-                var cuenta = await _uow.Cuentas.ObtenerPorIdAsync(transaccion.CuentaOrigenId.Value);
-                if (cuenta != null)
+                return await _uow.EjecutarEnTransaccionAsync(async () =>
                 {
-                    if (transaccion.Tipo == TipoTransaccion.Egreso)
-                        cuenta.SaldoActual += transaccion.Monto;
-                    else if (transaccion.Tipo == TipoTransaccion.Ingreso)
-                        cuenta.SaldoActual -= transaccion.Monto;
+                    var transaccion = await _uow.Transacciones.ObtenerPorIdAsync(transaccionId);
+                    if (transaccion == null)
+                        return ResultadoOperacion<bool>.Falla("Transacción no encontrada.");
 
-                    _uow.Cuentas.Actualizar(cuenta);
-                }
+                    if (transaccion.CuentaOrigenId.HasValue)
+                    {
+                        var cuenta = await _uow.Cuentas.ObtenerPorIdAsync(transaccion.CuentaOrigenId.Value);
+                        if (cuenta != null)
+                        {
+                            if (transaccion.Tipo == TipoTransaccion.Egreso)
+                                cuenta.SaldoActual += transaccion.Monto;
+                            else if (transaccion.Tipo == TipoTransaccion.Ingreso)
+                                cuenta.SaldoActual -= transaccion.Monto;
+
+                            _uow.Cuentas.Actualizar(cuenta);
+                        }
+                    }
+
+                    _uow.Transacciones.EliminarLogico(transaccion);
+
+                    var log = new AuditLog
+                    {
+                        FamiliaId = transaccion.FamiliaId,
+                        Entidad = "Transaccion",
+                        Accion = "ANULAR",
+                        RegistroId = transaccion.Id.ToString(),
+                        UsuarioId = usuarioId,
+                        NombreUsuario = "Usuario",
+                        Detalles = $"Anulación de movimiento #{transaccion.Id}: {transaccion.Concepto} ({transaccion.Monto:N2} {transaccion.Moneda})",
+                        FechaCreacion = DateTime.UtcNow
+                    };
+                    if (_uow.AuditLogs != null)
+                    {
+                        await _uow.AuditLogs.AgregarAsync(log);
+                    }
+
+                    await _uow.GuardarCambiosAsync();
+
+                    return ResultadoOperacion<bool>.Ok(true, "Transacción anulada correctamente.");
+                });
             }
-
-            _uow.Transacciones.EliminarLogico(transaccion);
-
-            var log = new AuditLog
+            catch (DbUpdateConcurrencyException)
             {
-                FamiliaId = transaccion.FamiliaId,
-                Entidad = "Transaccion",
-                Accion = "ANULAR",
-                RegistroId = transaccion.Id.ToString(),
-                UsuarioId = usuarioId,
-                NombreUsuario = "Usuario",
-                Detalles = $"Anulación de movimiento #{transaccion.Id}: {transaccion.Concepto} ({transaccion.Monto:N2} {transaccion.Moneda})",
-                FechaCreacion = DateTime.UtcNow
-            };
-            if (_uow.AuditLogs != null)
-            {
-                await _uow.AuditLogs.AgregarAsync(log);
+                return ResultadoOperacion<bool>.Falla("Conflicto de concurrencia: la cuenta o transacción fue modificada simultáneamente por otro usuario. Por favor, intente de nuevo.");
             }
-
-            await _uow.GuardarCambiosAsync();
-
-            return ResultadoOperacion<bool>.Ok(true, "Transacción anulada correctamente.");
+            catch (Exception ex)
+            {
+                return ResultadoOperacion<bool>.Falla("Error al anular la transacción: " + ex.Message);
+            }
         }
     }
 
@@ -676,74 +705,88 @@ namespace FHouse.Services.Implementations
             if (!validacion.IsValid)
                 return ResultadoOperacion<bool>.Falla(validacion.Errors.Select(e => e.ErrorMessage));
 
-            var cuentaOrigen = await _uow.Cuentas.ObtenerPorIdAsync(dto.CuentaOrigenId);
-            var cuentaDestino = await _uow.Cuentas.ObtenerPorIdAsync(dto.CuentaDestinoId);
-
-            if (cuentaOrigen == null || cuentaDestino == null)
-                return ResultadoOperacion<bool>.Falla("Una o ambas cuentas no existen.");
-
-            if (cuentaOrigen.SaldoActual < dto.Monto)
-                return ResultadoOperacion<bool>.Falla($"Saldo insuficiente en la cuenta '{cuentaOrigen.Nombre}'. Saldo actual: {cuentaOrigen.SaldoActual:N2}.");
-
-            var familia = await _uow.Familias.ObtenerPorIdAsync(dto.FamiliaId);
-            decimal tasa = familia != null && familia.TasaCambioActual > 0 ? familia.TasaCambioActual : 60.50m;
-
-            decimal montoDestino = dto.Monto;
-            if (cuentaOrigen.Moneda != cuentaDestino.Moneda)
+            try
             {
-                if (cuentaOrigen.Moneda == Moneda.DOP && cuentaDestino.Moneda == Moneda.USD)
+                return await _uow.EjecutarEnTransaccionAsync(async () =>
                 {
-                    montoDestino = Math.Round(dto.Monto / tasa, 2);
-                }
-                else if (cuentaOrigen.Moneda == Moneda.USD && cuentaDestino.Moneda == Moneda.DOP)
-                {
-                    montoDestino = Math.Round(dto.Monto * tasa, 2);
-                }
+                    var cuentaOrigen = await _uow.Cuentas.ObtenerPorIdAsync(dto.CuentaOrigenId);
+                    var cuentaDestino = await _uow.Cuentas.ObtenerPorIdAsync(dto.CuentaDestinoId);
+
+                    if (cuentaOrigen == null || cuentaDestino == null)
+                        return ResultadoOperacion<bool>.Falla("Una o ambas cuentas no existen.");
+
+                    if (cuentaOrigen.SaldoActual < dto.Monto)
+                        return ResultadoOperacion<bool>.Falla($"Saldo insuficiente en la cuenta '{cuentaOrigen.Nombre}'. Saldo actual: {cuentaOrigen.SaldoActual:N2}.");
+
+                    var familia = await _uow.Familias.ObtenerPorIdAsync(dto.FamiliaId);
+                    decimal tasa = familia != null && familia.TasaCambioActual > 0 ? familia.TasaCambioActual : 60.50m;
+
+                    decimal montoDestino = dto.Monto;
+                    if (cuentaOrigen.Moneda != cuentaDestino.Moneda)
+                    {
+                        if (cuentaOrigen.Moneda == Moneda.DOP && cuentaDestino.Moneda == Moneda.USD)
+                        {
+                            montoDestino = Math.Round(dto.Monto / tasa, 2);
+                        }
+                        else if (cuentaOrigen.Moneda == Moneda.USD && cuentaDestino.Moneda == Moneda.DOP)
+                        {
+                            montoDestino = Math.Round(dto.Monto * tasa, 2);
+                        }
+                    }
+
+                    cuentaOrigen.SaldoActual -= dto.Monto;
+                    cuentaDestino.SaldoActual += montoDestino;
+
+                    _uow.Cuentas.Actualizar(cuentaOrigen);
+                    _uow.Cuentas.Actualizar(cuentaDestino);
+
+                    var transaccion = new Transaccion
+                    {
+                        Concepto = $"Transferencia: {cuentaOrigen.Nombre} -> {cuentaDestino.Nombre}",
+                        Monto = dto.Monto,
+                        Moneda = cuentaOrigen.Moneda,
+                        MontoEnDOP = cuentaOrigen.Moneda == Moneda.USD ? dto.Monto * tasa : dto.Monto,
+                        Tipo = TipoTransaccion.Egreso,
+                        FechaTransaccion = DateTime.UtcNow,
+                        FamiliaId = dto.FamiliaId,
+                        CuentaOrigenId = cuentaOrigen.Id,
+                        CuentaDestinoId = cuentaDestino.Id,
+                        UsuarioRegistradorId = usuarioId,
+                        NombreUsuarioRegistrador = nombreUsuario ?? "Usuario",
+                        Comentario = dto.Comentario,
+                        FechaCreacion = DateTime.UtcNow
+                    };
+
+                    await _uow.Transacciones.AgregarAsync(transaccion);
+
+                    var log = new AuditLog
+                    {
+                        FamiliaId = dto.FamiliaId,
+                        Entidad = "Cuenta",
+                        Accion = "TRANSFERENCIA",
+                        UsuarioId = usuarioId,
+                        NombreUsuario = nombreUsuario ?? "Usuario",
+                        Detalles = $"Transferencia de {dto.Monto:N2} {cuentaOrigen.Moneda} desde '{cuentaOrigen.Nombre}' hacia '{cuentaDestino.Nombre}' (Recibido: {montoDestino:N2} {cuentaDestino.Moneda})",
+                        FechaCreacion = DateTime.UtcNow
+                    };
+                    if (_uow.AuditLogs != null)
+                    {
+                        await _uow.AuditLogs.AgregarAsync(log);
+                    }
+
+                    await _uow.GuardarCambiosAsync();
+
+                    return ResultadoOperacion<bool>.Ok(true, "Transferencia realizada con éxito.");
+                });
             }
-
-            cuentaOrigen.SaldoActual -= dto.Monto;
-            cuentaDestino.SaldoActual += montoDestino;
-
-            _uow.Cuentas.Actualizar(cuentaOrigen);
-            _uow.Cuentas.Actualizar(cuentaDestino);
-
-            var transaccion = new Transaccion
+            catch (DbUpdateConcurrencyException)
             {
-                Concepto = $"Transferencia: {cuentaOrigen.Nombre} -> {cuentaDestino.Nombre}",
-                Monto = dto.Monto,
-                Moneda = cuentaOrigen.Moneda,
-                MontoEnDOP = cuentaOrigen.Moneda == Moneda.USD ? dto.Monto * tasa : dto.Monto,
-                Tipo = TipoTransaccion.Egreso,
-                FechaTransaccion = DateTime.UtcNow,
-                FamiliaId = dto.FamiliaId,
-                CuentaOrigenId = cuentaOrigen.Id,
-                CuentaDestinoId = cuentaDestino.Id,
-                UsuarioRegistradorId = usuarioId,
-                NombreUsuarioRegistrador = nombreUsuario ?? "Usuario",
-                Comentario = dto.Comentario,
-                FechaCreacion = DateTime.UtcNow
-            };
-
-            await _uow.Transacciones.AgregarAsync(transaccion);
-
-            var log = new AuditLog
-            {
-                FamiliaId = dto.FamiliaId,
-                Entidad = "Cuenta",
-                Accion = "TRANSFERENCIA",
-                UsuarioId = usuarioId,
-                NombreUsuario = nombreUsuario ?? "Usuario",
-                Detalles = $"Transferencia de {dto.Monto:N2} {cuentaOrigen.Moneda} desde '{cuentaOrigen.Nombre}' hacia '{cuentaDestino.Nombre}' (Recibido: {montoDestino:N2} {cuentaDestino.Moneda})",
-                FechaCreacion = DateTime.UtcNow
-            };
-            if (_uow.AuditLogs != null)
-            {
-                await _uow.AuditLogs.AgregarAsync(log);
+                return ResultadoOperacion<bool>.Falla("Conflicto de concurrencia: una de las cuentas fue modificada en paralelo. Por favor, reintente la transferencia.");
             }
-
-            await _uow.GuardarCambiosAsync();
-
-            return ResultadoOperacion<bool>.Ok(true, "Transferencia realizada con éxito.");
+            catch (Exception ex)
+            {
+                return ResultadoOperacion<bool>.Falla("Error al realizar la transferencia: " + ex.Message);
+            }
         }
     }
 

@@ -75,5 +75,7 @@ namespace FHouse.Core.Interfaces.Repositories
         IRepository<UsuarioFamilia> UsuariosFamilia { get; }
 
         Task<int> GuardarCambiosAsync();
+        Task<TResult> EjecutarEnTransaccionAsync<TResult>(Func<Task<TResult>> accion);
+        Task EjecutarEnTransaccionAsync(Func<Task> accion);
     }
 }
