@@ -4,39 +4,40 @@
    Apple Design System & Theme Engine (Apple.com / Apple Wallet Standard)
    ========================================================================== */
 
-:root {
-  /* Dark Theme (Default Apple Pro OLED Space Black) */
-  --bg-app: #000000;
-  --bg-subtle: #0c0c0e;
-  --bg-card: #161618;
-  --bg-card-elevated: #1c1c1e;
-  --bg-card-hover: #242426;
-  --bg-input: #1c1c1e;
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.16);
-  --border-focus: #2997ff;
+:root,
+html.dark {
+  /* Dark / Night Sky Blue Theme (Cielo Nocturno / Deep Midnight Sky) */
+  --bg-app: #080d1a;
+  --bg-subtle: #0e172c;
+  --bg-card: #121c35;
+  --bg-card-elevated: #172442;
+  --bg-card-hover: #1c2b50;
+  --bg-input: #0b1326;
+  --border-subtle: rgba(147, 197, 253, 0.12);
+  --border-strong: rgba(147, 197, 253, 0.22);
+  --border-focus: #38bdf8;
   
-  --text-primary: #f5f5f7;
-  --text-secondary: #86868b;
-  --text-tertiary: #636366;
-  --text-muted: #48484a;
+  --text-primary: #f0f6ff;
+  --text-secondary: #94a3b8;
+  --text-tertiary: #64748b;
+  --text-muted: #475569;
 
-  --apple-blue: #2997ff;
-  --apple-blue-hover: #0077ed;
-  --apple-green: #30d158;
-  --apple-red: #ff453a;
-  --apple-amber: #ff9f0a;
-  --apple-purple: #bf5af2;
-  --apple-indigo: #5e5ce6;
+  --apple-blue: #38bdf8;
+  --apple-blue-hover: #0284c7;
+  --apple-green: #34d399;
+  --apple-red: #f87171;
+  --apple-amber: #fbbf24;
+  --apple-purple: #c084fc;
+  --apple-indigo: #818cf8;
 
-  --nav-bg: rgba(22, 22, 24, 0.82);
-  --nav-border: rgba(255, 255, 255, 0.08);
-  --modal-bg: rgba(28, 28, 30, 0.96);
-  --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-  --wallet-card-bg: linear-gradient(135deg, #1c1c1e 0%, #0d0d0e 100%);
-  --wallet-card-border: rgba(255, 255, 255, 0.12);
-  --table-header-bg: rgba(255, 255, 255, 0.02);
-  --table-row-hover: rgba(255, 255, 255, 0.025);
+  --nav-bg: rgba(10, 17, 34, 0.85);
+  --nav-border: rgba(147, 197, 253, 0.12);
+  --modal-bg: rgba(14, 23, 44, 0.96);
+  --card-shadow: 0 12px 32px -4px rgba(2, 6, 23, 0.65), 0 0 0 1px rgba(147, 197, 253, 0.08);
+  --wallet-card-bg: linear-gradient(135deg, #1b2a4e 0%, #101a33 55%, #0a1124 100%);
+  --wallet-card-border: rgba(147, 197, 253, 0.22);
+  --table-header-bg: rgba(147, 197, 253, 0.04);
+  --table-row-hover: rgba(147, 197, 253, 0.05);
 }
 
 html.light {

@@ -71,7 +71,7 @@ namespace FHouse.Infrastructure.Data
                 await context.SaveChangesAsync();
             }
 
-            // 4. Categorías base
+            // 4. Categorías base universales
             if (!await context.Categorias.AnyAsync(c => c.FamiliaId == familia.Id))
             {
                 var categorias = new[]
@@ -82,64 +82,24 @@ namespace FHouse.Infrastructure.Data
                     new Categoria { Nombre = "Salud y Medicamentos", Tipo = TipoCategoria.Egreso, Icono = "heart", Color = "#FF3B30", FamiliaId = familia.Id },
                     new Categoria { Nombre = "Educación y Cursos", Tipo = TipoCategoria.Egreso, Icono = "book-open", Color = "#AF52DE", FamiliaId = familia.Id },
                     new Categoria { Nombre = "Salario y Honorarios", Tipo = TipoCategoria.Ingreso, Icono = "briefcase", Color = "#30D158", FamiliaId = familia.Id },
-                    new Categoria { Nombre = "Ventas Negocio Portadorza", Tipo = TipoCategoria.Ingreso, Icono = "trending-up", Color = "#2997FF", FamiliaId = familia.Id },
+                    new Categoria { Nombre = "Ventas y Negocios", Tipo = TipoCategoria.Ingreso, Icono = "trending-up", Color = "#2997FF", FamiliaId = familia.Id },
                     new Categoria { Nombre = "Rentas e Inversiones", Tipo = TipoCategoria.Ingreso, Icono = "dollar-sign", Color = "#BF5AF2", FamiliaId = familia.Id }
                 };
                 context.Categorias.AddRange(categorias);
                 await context.SaveChangesAsync();
             }
 
-            // 5. Fuente de Ingreso inicial
-            var fuente = await context.FuentesIngreso.FirstOrDefaultAsync(f => f.FamiliaId == familia.Id);
-            if (fuente == null)
+            // 5. Limpieza preventiva de datos demo no deseados
+            var fuentesDummy = await context.FuentesIngreso.Where(f => f.Nombre == "Portadorza Corp" && !context.Transacciones.Any(t => t.FuenteIngresoId == f.Id)).ToListAsync();
+            if (fuentesDummy.Any())
             {
-                fuente = new FuenteIngreso
+                var fuenteIds = fuentesDummy.Select(f => f.Id).ToList();
+                var cuentasVinculadas = await context.Cuentas.Where(c => c.FuenteIngresoId.HasValue && fuenteIds.Contains(c.FuenteIngresoId.Value)).ToListAsync();
+                foreach (var c in cuentasVinculadas)
                 {
-                    Nombre = "Portadorza Corp",
-                    Tipo = TipoFuenteIngreso.Negocio,
-                    Descripcion = "Negocio principal de servicios y comercio tecnológico.",
-                    ColorIdentificador = "#0071E3",
-                    FamiliaId = familia.Id,
-                    UsuarioCreadorId = adminUser.Id,
-                    FechaCreacion = DateTime.UtcNow,
-                    Activo = true
-                };
-                context.FuentesIngreso.Add(fuente);
-                await context.SaveChangesAsync();
-            }
-
-            // 6. Cuentas bancarias iniciales
-            if (!await context.Cuentas.AnyAsync(c => c.FamiliaId == familia.Id))
-            {
-                var cuentaDOP = new Cuenta
-                {
-                    Nombre = "Banco Popular Corriente",
-                    InstitucionFinanciera = "Banco Popular",
-                    Moneda = Moneda.DOP,
-                    Tipo = TipoCuenta.Corriente,
-                    SaldoActual = 0m,
-                    NumeroCuenta = "•••• 4589",
-                    FamiliaId = familia.Id,
-                    FuenteIngresoId = fuente.Id,
-                    UsuarioResponsableId = adminUser.Id,
-                    Activo = true
-                };
-
-                var cuentaUSD = new Cuenta
-                {
-                    Nombre = "BHD Ahorros USD",
-                    InstitucionFinanciera = "Banco BHD",
-                    Moneda = Moneda.USD,
-                    Tipo = TipoCuenta.Ahorro,
-                    SaldoActual = 0m,
-                    NumeroCuenta = "•••• 8921",
-                    FamiliaId = familia.Id,
-                    UsuarioResponsableId = adminUser.Id,
-                    Activo = true
-                };
-
-                context.Cuentas.Add(cuentaDOP);
-                context.Cuentas.Add(cuentaUSD);
+                    c.FuenteIngresoId = null;
+                }
+                context.FuentesIngreso.RemoveRange(fuentesDummy);
                 await context.SaveChangesAsync();
             }
         }

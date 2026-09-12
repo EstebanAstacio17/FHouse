@@ -861,6 +861,28 @@ namespace FHouse.Services.Implementations
         public async Task<ResultadoOperacion<IEnumerable<CategoriaDetalleDto>>> ObtenerPorFamiliaAsync(int familiaId)
         {
             var categorias = await _uow.Categorias.ObtenerPorFamiliaAsync(familiaId);
+            if (categorias == null || !categorias.Any())
+            {
+                var defaults = new[]
+                {
+                    new Categoria { Nombre = "Supermercado y Alimentación", Tipo = TipoCategoria.Egreso, Icono = "shopping-cart", Color = "#34C759", FamiliaId = familiaId, Activo = true },
+                    new Categoria { Nombre = "Vivienda y Servicios", Tipo = TipoCategoria.Egreso, Icono = "home", Color = "#0071E3", FamiliaId = familiaId, Activo = true },
+                    new Categoria { Nombre = "Combustible y Transporte", Tipo = TipoCategoria.Egreso, Icono = "car", Color = "#FF9500", FamiliaId = familiaId, Activo = true },
+                    new Categoria { Nombre = "Salud y Medicamentos", Tipo = TipoCategoria.Egreso, Icono = "heart", Color = "#FF3B30", FamiliaId = familiaId, Activo = true },
+                    new Categoria { Nombre = "Educación y Cursos", Tipo = TipoCategoria.Egreso, Icono = "book-open", Color = "#AF52DE", FamiliaId = familiaId, Activo = true },
+                    new Categoria { Nombre = "Salario y Honorarios", Tipo = TipoCategoria.Ingreso, Icono = "briefcase", Color = "#30D158", FamiliaId = familiaId, Activo = true },
+                    new Categoria { Nombre = "Ventas y Negocios", Tipo = TipoCategoria.Ingreso, Icono = "trending-up", Color = "#2997FF", FamiliaId = familiaId, Activo = true },
+                    new Categoria { Nombre = "Rentas e Inversiones", Tipo = TipoCategoria.Ingreso, Icono = "dollar-sign", Color = "#BF5AF2", FamiliaId = familiaId, Activo = true }
+                };
+
+                foreach (var d in defaults)
+                {
+                    await _uow.Categorias.AgregarAsync(d);
+                }
+                await _uow.GuardarCambiosAsync();
+                categorias = await _uow.Categorias.ObtenerPorFamiliaAsync(familiaId);
+            }
+
             return ResultadoOperacion<IEnumerable<CategoriaDetalleDto>>.Ok(_mapper.Map<IEnumerable<CategoriaDetalleDto>>(categorias));
         }
 

@@ -17,7 +17,7 @@
                 <span class="w-2 h-2 rounded-full bg-[#30d158]"></span>
                 <span>Tasa USD: <strong class="text-title">RD$ @Model.TasaCambioActual.ToString("N2")</strong></span>
             </div>
-            <button type="button" x-on:click="openModalTransaccion = true" class="btn-apple-primary">
+            <button type="button" x-on:click="openModalTransaccion = true; $dispatch('openModalTransaccion')" class="btn-apple-primary">
                 <i data-lucide="plus" class="w-4 h-4"></i>
                 <span>Nuevo Movimiento</span>
             </button>

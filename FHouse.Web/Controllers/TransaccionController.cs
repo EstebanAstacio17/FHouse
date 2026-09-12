@@ -27,6 +27,21 @@ namespace FHouse.Web.Controllers
         }
 
         [HttpGet]
+        public async Task<ActionResult> OpcionesModal()
+        {
+            int familiaId = GetFamiliaId();
+            var fuentes = await _fuenteService.ObtenerPorFamiliaAsync(familiaId);
+            var cuentas = await _cuentaService.ObtenerPorFamiliaAsync(familiaId);
+            var categorias = await _categoriaService.ObtenerPorFamiliaAsync(familiaId);
+
+            ViewBag.Fuentes = fuentes?.Datos;
+            ViewBag.Cuentas = cuentas?.Datos;
+            ViewBag.Categorias = categorias?.Datos;
+
+            return PartialView("_ModalTransaccionCampos");
+        }
+
+        [HttpGet]
         public async Task<ActionResult> Index(FiltroTransaccionDto filtro)
         {
             int familiaId = GetFamiliaId();

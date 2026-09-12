@@ -140,7 +140,7 @@
                 @if (isAuth)
                 {
                     <!-- New Transaction Button (Single line, crisp Apple Pill) -->
-                    <button type="button" x-on:click="openModalTransaccion = true" class="btn-apple-primary">
+                    <button type="button" x-on:click="openModalTransaccion = true; $dispatch('openModalTransaccion')" class="btn-apple-primary">
                         <i data-lucide="plus" class="w-4 h-4 flex-shrink-0"></i>
                         <span class="whitespace-nowrap">Nuevo Movimiento</span>
                     </button>

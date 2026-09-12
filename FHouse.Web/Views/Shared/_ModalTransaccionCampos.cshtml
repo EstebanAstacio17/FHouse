@@ -1,0 +1,103 @@
+@using FHouse.Services.DTOs
+@using FHouse.Core.Enums
+
+@{
+    var fuentes = ViewBag.Fuentes as IEnumerable<FuenteIngresoDetalleDto>;
+    var cuentas = ViewBag.Cuentas as IEnumerable<CuentaDetalleDto>;
+    var categorias = ViewBag.Categorias as IEnumerable<CategoriaDetalleDto>;
+}
+
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+    <!-- Fuente / Negocio -->
+    <div>
+        <div class="flex items-center justify-between mb-1.5">
+            <label class="block text-xs font-semibold text-subtitle uppercase tracking-wider">Fuente / Negocio</label>
+            <a href="@Url.Action("Index", "FuenteIngreso")" class="text-[11px] text-[#0071e3] dark:text-[#38bdf8] hover:underline font-medium">
+                + Crear
+            </a>
+        </div>
+        <select name="FuenteIngresoId" class="apple-select text-sm truncate">
+            <option value="">General (Sin negocio)</option>
+            @if (fuentes != null)
+            {
+                foreach (var f in fuentes.Where(x => x.Activo))
+                {
+                    <option value="@f.Id">@f.Nombre (@f.Tipo)</option>
+                }
+            }
+        </select>
+    </div>
+
+    <!-- Cuenta Bancaria / Caja -->
+    <div>
+        <div class="flex items-center justify-between mb-1.5">
+            <label class="block text-xs font-semibold text-subtitle uppercase tracking-wider">Cuenta / Caja</label>
+            <a href="@Url.Action("Index", "Cuenta")" class="text-[11px] text-[#0071e3] dark:text-[#38bdf8] hover:underline font-medium">
+                + Nueva
+            </a>
+        </div>
+        <select name="CuentaOrigenId" class="apple-select text-sm truncate">
+            @if (cuentas != null && cuentas.Any(x => x.Activo))
+            {
+                <option value="">Seleccionar cuenta...</option>
+                foreach (var c in cuentas.Where(x => x.Activo))
+                {
+                    <option value="@c.Id">@c.Nombre (@c.Moneda)</option>
+                }
+            }
+            else
+            {
+                <option value="">Caja General (Efectivo)</option>
+            }
+        </select>
+    </div>
+</div>
+
+<!-- Categoría Presupuestaria -->
+<div class="mb-6">
+    <div class="flex items-center justify-between mb-1.5">
+        <label class="block text-xs font-semibold text-subtitle uppercase tracking-wider">Categoría</label>
+        <a href="@Url.Action("Index", "Categoria")" class="text-[11px] text-[#0071e3] dark:text-[#38bdf8] hover:underline font-medium">
+            Gestionar
+        </a>
+    </div>
+    <select name="CategoriaId" required class="apple-select text-sm truncate">
+        <option value="">Seleccionar categoría...</option>
+        @if (categorias != null && categorias.Any(x => x.Activo))
+        {
+            var egresos = categorias.Where(x => x.Activo && x.Tipo == TipoCategoria.Egreso).ToList();
+            var ingresos = categorias.Where(x => x.Activo && x.Tipo == TipoCategoria.Ingreso).ToList();
+            var otras = categorias.Where(x => x.Activo && x.Tipo != TipoCategoria.Egreso && x.Tipo != TipoCategoria.Ingreso).ToList();
+
+            if (egresos.Any())
+            {
+                <optgroup label="Gastos y Egresos">
+                    @foreach (var cat in egresos)
+                    {
+                        <option value="@cat.Id">@cat.Nombre</option>
+                    }
+                </optgroup>
+            }
+
+            if (ingresos.Any())
+            {
+                <optgroup label="Ingresos">
+                    @foreach (var cat in ingresos)
+                    {
+                        <option value="@cat.Id">@cat.Nombre</option>
+                    }
+                </optgroup>
+            }
+
+            if (otras.Any())
+            {
+                <optgroup label="Otras Categorías">
+                    @foreach (var cat in otras)
+                    {
+                        <option value="@cat.Id">@cat.Nombre</option>
+                    }
+                </optgroup>
+            }
+        }
+    </select>
+</div>

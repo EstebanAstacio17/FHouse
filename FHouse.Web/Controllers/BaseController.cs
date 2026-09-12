@@ -40,29 +40,15 @@ namespace FHouse.Web.Controllers
                 return familiaId;
             }
 
-            Session["FamiliaId"] = 1;
             return 1;
         }
 
         protected string GetFamiliaNombre()
         {
-            if (Session["FamiliaNombre"] != null && !string.IsNullOrWhiteSpace(Session["FamiliaNombre"].ToString()))
+            if (Session["FamiliaNombre"] != null)
             {
                 return Session["FamiliaNombre"].ToString();
             }
-
-            int familiaId = GetFamiliaId();
-            try
-            {
-                var db = DependencyResolver.Current.GetService<FHouseDbContext>() ?? new FHouseDbContext();
-                var fam = db.Familias.Find(familiaId);
-                if (fam != null && !string.IsNullOrWhiteSpace(fam.Nombre))
-                {
-                    Session["FamiliaNombre"] = fam.Nombre;
-                    return fam.Nombre;
-                }
-            }
-            catch { }
 
             var identity = User?.Identity as ClaimsIdentity;
             var claim = identity?.FindFirst("FamiliaNombre");
@@ -78,29 +64,15 @@ namespace FHouse.Web.Controllers
         protected string GetUsuarioId()
         {
             var identity = User?.Identity as ClaimsIdentity;
-            var claim = identity?.FindFirst(ClaimTypes.NameIdentifier);
-            return claim?.Value ?? "usr-admin-001";
+            return identity?.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "usr-admin-001";
         }
 
         protected string GetNombreUsuario()
         {
-            if (Session["NombreCompleto"] != null && !string.IsNullOrWhiteSpace(Session["NombreCompleto"].ToString()))
+            if (Session["NombreCompleto"] != null)
             {
                 return Session["NombreCompleto"].ToString();
             }
-
-            var usuarioId = GetUsuarioId();
-            try
-            {
-                var db = DependencyResolver.Current.GetService<FHouseDbContext>() ?? new FHouseDbContext();
-                var user = db.Users.Find(usuarioId);
-                if (user != null && !string.IsNullOrWhiteSpace(user.NombreCompleto))
-                {
-                    Session["NombreCompleto"] = user.NombreCompleto;
-                    return user.NombreCompleto;
-                }
-            }
-            catch { }
 
             var identity = User?.Identity as ClaimsIdentity;
             var claim = identity?.FindFirst("NombreCompleto");
@@ -115,39 +87,38 @@ namespace FHouse.Web.Controllers
 
         protected string GetEmailUsuario()
         {
-            if (Session["Email"] != null && !string.IsNullOrWhiteSpace(Session["Email"].ToString()))
+            if (Session["Email"] != null)
             {
                 return Session["Email"].ToString();
             }
 
-            var usuarioId = GetUsuarioId();
-            try
-            {
-                var db = DependencyResolver.Current.GetService<FHouseDbContext>() ?? new FHouseDbContext();
-                var user = db.Users.Find(usuarioId);
-                if (user != null && !string.IsNullOrWhiteSpace(user.Email))
-                {
-                    Session["Email"] = user.Email;
-                    return user.Email;
-                }
-            }
-            catch { }
-
             var identity = User?.Identity as ClaimsIdentity;
             var claim = identity?.FindFirst(ClaimTypes.Email);
-            return claim?.Value ?? (User?.Identity?.Name ?? "admin@fhouse.com");
+            if (claim != null && !string.IsNullOrWhiteSpace(claim.Value))
+            {
+                Session["Email"] = claim.Value;
+                return claim.Value;
+            }
+
+            return User?.Identity?.Name ?? "admin@fhouse.com";
         }
 
         protected string GetRolUsuario()
         {
-            if (Session["Rol"] != null && !string.IsNullOrWhiteSpace(Session["Rol"].ToString()))
+            if (Session["Rol"] != null)
             {
                 return Session["Rol"].ToString();
             }
 
             var identity = User?.Identity as ClaimsIdentity;
             var claim = identity?.FindFirst(ClaimTypes.Role);
-            return claim?.Value ?? "Admin";
+            if (claim != null && !string.IsNullOrWhiteSpace(claim.Value))
+            {
+                Session["Rol"] = claim.Value;
+                return claim.Value;
+            }
+
+            return "Admin";
         }
 
         protected bool IsHtmxRequest()

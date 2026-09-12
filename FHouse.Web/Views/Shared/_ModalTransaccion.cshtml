@@ -80,51 +80,12 @@
                        class="apple-input text-sm" />
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                <!-- Fuente de Ingreso (Negocio / Empleo) -->
-                <div>
-                    <label class="block text-xs font-medium text-subtitle mb-1.5">Fuente / Negocio Asociado</label>
-                    <select name="FuenteIngresoId" class="apple-select text-sm">
-                        <option value="">-- General / Sin Fuente --</option>
-                        @if (ViewBag.Fuentes != null)
-                        {
-                            foreach (var f in ((IEnumerable<FHouse.Services.DTOs.FuenteIngresoDetalleDto>)ViewBag.Fuentes).Where(x => x.Activo))
-                            {
-                                <option value="@f.Id">@f.Nombre (@f.Tipo)</option>
-                            }
-                        }
-                    </select>
-                </div>
-
-                <!-- Cuenta Bancaria -->
-                <div>
-                    <label class="block text-xs font-medium text-subtitle mb-1.5">Cuenta Bancaria / Caja</label>
-                    <select name="CuentaOrigenId" class="apple-select text-sm">
-                        <option value="">-- Seleccionar Cuenta --</option>
-                        @if (ViewBag.Cuentas != null)
-                        {
-                            foreach (var c in ((IEnumerable<FHouse.Services.DTOs.CuentaDetalleDto>)ViewBag.Cuentas).Where(x => x.Activo))
-                            {
-                                <option value="@c.Id">@c.Nombre (@c.Moneda - Saldo: @c.SaldoActual.ToString("N2"))</option>
-                            }
-                        }
-                    </select>
-                </div>
-            </div>
-
-            <!-- Categoría -->
-            <div class="mb-6">
-                <label class="block text-xs font-medium text-subtitle mb-1.5">Categoría Presupuestaria</label>
-                <select name="CategoriaId" required class="apple-select text-sm">
-                    <option value="">-- Seleccionar Categoría --</option>
-                    @if (ViewBag.Categorias != null)
-                    {
-                        foreach (var cat in ((IEnumerable<FHouse.Services.DTOs.CategoriaDetalleDto>)ViewBag.Categorias).Where(x => x.Activo))
-                        {
-                            <option value="@cat.Id">@cat.Nombre</option>
-                        }
-                    }
-                </select>
+            <!-- Contenedor dinámico e interconectado de opciones (Fuentes, Cuentas, Categorías) -->
+            <div id="modal-transaccion-campos-container"
+                 hx-get="@Url.Action("OpcionesModal", "Transaccion")"
+                 hx-trigger="openModalTransaccion from:body, fuenteCreada from:body, cuentaCreada from:body, categoriaCreada from:body"
+                 hx-swap="innerHTML">
+                @Html.Partial("_ModalTransaccionCampos")
             </div>
 
             <!-- Botones de Acción -->

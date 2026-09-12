@@ -21,15 +21,18 @@ namespace FHouse.Web
             // Configurar AntiForgery para ClaimsIdentity
             System.Web.Helpers.AntiForgeryConfig.UniqueClaimTypeIdentifier = System.Security.Claims.ClaimTypes.NameIdentifier;
 
-            // Sembrado inicial de base de datos
-            try
+            // Sembrado inicial de base de datos asíncrono no bloqueante
+            System.Threading.Tasks.Task.Run(async () =>
             {
-                using (var db = new FHouse.Infrastructure.Data.FHouseDbContext())
+                try
                 {
-                    FHouse.Infrastructure.Data.FHouseDbSeeder.SeedAsync(db).Wait();
+                    using (var db = new FHouse.Infrastructure.Data.FHouseDbContext())
+                    {
+                        await FHouse.Infrastructure.Data.FHouseDbSeeder.SeedAsync(db);
+                    }
                 }
-            }
-            catch { }
+                catch { }
+            });
         }
     }
 }
