@@ -325,6 +325,16 @@
 
     <!-- App Script -->
     <script src="~/wwwroot/js/fhouse.app.js"></script>
+    @if (isAuth)
+    {
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                if (typeof inicializarAutoLogout === 'function') {
+                    inicializarAutoLogout(5);
+                }
+            });
+        </script>
+    }
     @RenderSection("Scripts", required: false)
 </body>
 </html>

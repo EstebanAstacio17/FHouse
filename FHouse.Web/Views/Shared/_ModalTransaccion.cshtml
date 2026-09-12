@@ -1,86 +1,92 @@
 <!-- Modal: Nueva Transacción (Pure High-Performance Component) -->
 <div id="modal-nueva-transaccion"
-     class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-md flex items-center justify-center p-4 transition-opacity duration-200"
+     class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-md p-3 sm:p-4 flex justify-center items-start sm:items-center min-h-screen py-6 sm:py-8 transition-opacity duration-200"
      style="display: none;"
      onclick="if (event.target === this) cerrarModalTransaccion();">
 
-    <div class="apple-modal w-full max-w-lg p-6 sm:p-8 text-left relative overflow-hidden"
+    <div class="apple-modal w-full max-w-lg p-5 sm:p-6 text-left relative overflow-hidden shadow-2xl border border-white/20 dark:border-white/10 my-auto flex flex-col max-h-[92vh]"
          onclick="event.stopPropagation();">
 
-        <!-- Close Button -->
-        <button type="button" onclick="cerrarModalTransaccion()" class="absolute top-6 right-6 text-subtitle hover:text-title transition-colors">
-            <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-
-        <h3 class="text-xl font-bold text-title tracking-tight mb-1">Registrar Movimiento</h3>
-        <p class="text-xs text-subtitle mb-6">Asigna el ingreso o gasto a un negocio o cuenta específica.</p>
+        <!-- Header -->
+        <div class="flex items-center justify-between pb-3 mb-3 border-b border-black/5 dark:border-white/5 flex-shrink-0">
+            <div>
+                <h3 class="text-base font-bold text-title tracking-tight">Registrar Movimiento</h3>
+                <p class="text-xs text-subtitle">Asigna el ingreso o gasto a una fuente, cuenta o categoría.</p>
+            </div>
+            <button type="button" onclick="cerrarModalTransaccion()" class="p-1 rounded-full text-subtitle hover:text-title hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
 
         <!-- Formulario con soporte AJAX (htmx) -->
         <form hx-post="@Url.Action("Crear", "Transaccion")" 
               hx-swap="none" 
               hx-indicator="#loading-spinner"
-              id="form-nueva-transaccion">
+              id="form-nueva-transaccion"
+              class="flex flex-col flex-1 overflow-hidden min-h-0">
             
             @Html.AntiForgeryToken()
 
-            <!-- Selector Tipo (Egreso / Ingreso) Segmented Apple Control -->
-            <input type="hidden" name="Tipo" id="modal-input-tipo" value="2" />
-            <div class="grid grid-cols-2 p-1 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 mb-5">
-                <button type="button" 
-                        id="modal-btn-tipo-egreso"
-                        onclick="seleccionarTipoTransaccion('2')" 
-                        class="py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition-all bg-[#ff3b30]/15 text-[#ff3b30] dark:text-[#ff453a] shadow-sm font-bold">
-                    <i data-lucide="arrow-down-circle" class="w-4 h-4"></i>
-                    <span>Egreso / Gasto</span>
-                </button>
-                <button type="button" 
-                        id="modal-btn-tipo-ingreso"
-                        onclick="seleccionarTipoTransaccion('1')" 
-                        class="py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition-all text-subtitle hover:text-title font-medium">
-                    <i data-lucide="arrow-up-circle" class="w-4 h-4"></i>
-                    <span>Ingreso</span>
-                </button>
-            </div>
+            <div class="overflow-y-auto pr-1 space-y-3.5 flex-1 custom-modal-scroll">
+                <!-- Selector Tipo (Egreso / Ingreso) Segmented Apple Control -->
+                <input type="hidden" name="Tipo" id="modal-input-tipo" value="2" />
+                <div class="grid grid-cols-2 p-1 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5">
+                    <button type="button" 
+                            id="modal-btn-tipo-egreso"
+                            onclick="seleccionarTipoTransaccion('2')" 
+                            class="py-2 rounded-xl text-xs flex items-center justify-center gap-2 transition-all bg-[#ff3b30]/15 text-[#ff3b30] dark:text-[#ff453a] shadow-sm font-bold">
+                        <i data-lucide="arrow-down-circle" class="w-4 h-4"></i>
+                        <span>Egreso / Gasto</span>
+                    </button>
+                    <button type="button" 
+                            id="modal-btn-tipo-ingreso"
+                            onclick="seleccionarTipoTransaccion('1')" 
+                            class="py-2 rounded-xl text-xs flex items-center justify-center gap-2 transition-all text-subtitle hover:text-title font-medium">
+                        <i data-lucide="arrow-up-circle" class="w-4 h-4"></i>
+                        <span>Ingreso</span>
+                    </button>
+                </div>
 
-            <!-- Monto & Moneda (DOP / USD) -->
-            <div class="mb-4">
-                <label class="block text-xs font-medium text-subtitle mb-1.5">Monto y Moneda</label>
-                <div class="grid grid-cols-3 gap-3">
-                    <div class="col-span-2 relative">
-                        <span id="modal-label-moneda" class="absolute left-4 top-1/2 -translate-y-1/2 text-subtitle font-bold text-sm">RD$</span>
-                        <input type="number" step="0.01" min="0.01" name="Monto" required placeholder="0.00" 
-                               class="apple-input pl-14 text-lg font-bold" />
+                <!-- Monto & Moneda (DOP / USD) -->
+                <div>
+                    <label class="block text-xs font-semibold text-subtitle mb-1">Monto y Moneda</label>
+                    <div class="grid grid-cols-3 gap-2.5">
+                        <div class="col-span-2 relative">
+                            <span id="modal-label-moneda" class="absolute left-3 top-1/2 -translate-y-1/2 text-subtitle font-bold text-xs">RD$</span>
+                            <input type="number" step="0.01" min="0.01" name="Monto" required placeholder="0.00" 
+                                   class="apple-input pl-11 text-base font-bold py-2 px-3" />
+                        </div>
+                        <div>
+                            <select name="Moneda" id="modal-select-moneda" onchange="document.getElementById('modal-label-moneda').textContent = this.value === '2' ? '$' : 'RD$';" class="apple-select font-semibold text-xs py-2 px-2.5">
+                                <option value="1">DOP (RD$)</option>
+                                <option value="2">USD ($)</option>
+                            </select>
+                        </div>
                     </div>
-                    <div>
-                        <select name="Moneda" id="modal-select-moneda" onchange="document.getElementById('modal-label-moneda').textContent = this.value === '2' ? '$' : 'RD$';" class="apple-select font-medium text-sm">
-                            <option value="1">DOP (RD$)</option>
-                            <option value="2">USD ($)</option>
-                        </select>
-                    </div>
+                </div>
+
+                <!-- Concepto -->
+                <div>
+                    <label class="block text-xs font-semibold text-subtitle mb-1">Concepto o Detalle</label>
+                    <input type="text" name="Concepto" required placeholder="Ej: Pago de nómina, Venta producto, Alquiler..." 
+                           class="apple-input text-xs py-2 px-3" />
+                </div>
+
+                <!-- Contenedor dinámico e interconectado de opciones (Fuentes, Cuentas, Categorías) -->
+                <div id="modal-transaccion-campos-container"
+                     hx-get="@Url.Action("OpcionesModal", "Transaccion")"
+                     hx-trigger="load, openModalTransaccion from:body, fuenteCreada from:body, cuentaCreada from:body, categoriaCreada from:body"
+                     hx-swap="innerHTML">
+                    @Html.Partial("_ModalTransaccionCampos")
                 </div>
             </div>
 
-            <!-- Concepto -->
-            <div class="mb-4">
-                <label class="block text-xs font-medium text-subtitle mb-1.5">Concepto o Detalle</label>
-                <input type="text" name="Concepto" required placeholder="Ej: Pago de nómina, Venta producto, Alquiler..." 
-                       class="apple-input text-sm" />
-            </div>
-
-            <!-- Contenedor dinámico e interconectado de opciones (Fuentes, Cuentas, Categorías) -->
-            <div id="modal-transaccion-campos-container"
-                 hx-get="@Url.Action("OpcionesModal", "Transaccion")"
-                 hx-trigger="load, openModalTransaccion from:body, fuenteCreada from:body, cuentaCreada from:body, categoriaCreada from:body"
-                 hx-swap="innerHTML">
-                @Html.Partial("_ModalTransaccionCampos")
-            </div>
-
             <!-- Botones de Acción -->
-            <div class="flex items-center justify-end gap-3 pt-2">
-                <button type="button" onclick="cerrarModalTransaccion()" class="btn-apple-secondary text-xs">
+            <div class="flex items-center justify-end gap-3 pt-3 mt-3 border-t border-black/5 dark:border-white/5 flex-shrink-0">
+                <button type="button" onclick="cerrarModalTransaccion()" class="btn-apple-secondary text-xs px-4 py-2">
                     Cancelar
                 </button>
-                <button type="submit" class="btn-apple-primary text-xs flex items-center gap-2">
+                <button type="submit" class="btn-apple-primary text-xs px-4 py-2 flex items-center gap-2">
                     <span id="loading-spinner" class="htmx-indicator animate-spin w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full"></span>
                     <span>Guardar Registro</span>
                 </button>

@@ -8,7 +8,54 @@
     openModalTransferencia: false,
     openModalEditarCuenta: false,
     filtroEstado: 'todas',
-    cuentaEdit: { id: 0, nombre: '', institucionFinanciera: '', numeroCuenta: '', tipo: '2', moneda: '1', fuenteIngresoId: '', activo: true }
+    nuevaCuenta: {
+        nombre: '',
+        institucionFinanciera: '',
+        numeroCuenta: '',
+        tipo: '2',
+        moneda: '1',
+        saldoInicial: '0.00',
+        fuenteIngresoId: ''
+    },
+    cuentaEdit: { 
+        id: 0, 
+        nombre: '', 
+        institucionFinanciera: '', 
+        numeroCuenta: '', 
+        tipo: '2', 
+        moneda: '1', 
+        fuenteIngresoId: '', 
+        activo: true 
+    },
+    bancosSugeridos: ['Banreservas', 'Banco Popular', 'BHD', 'Scotiabank', 'Banesco', 'APAP', 'Caja Chica', 'Efectivo Personal'],
+    aplicarBancoNueva(banco) {
+        this.nuevaCuenta.institucionFinanciera = banco;
+        if (!this.nuevaCuenta.nombre || this.bancosSugeridos.some(b => this.nuevaCuenta.nombre.includes(b))) {
+            const prefix = this.nuevaCuenta.tipo === '3' ? 'Caja ' : (this.nuevaCuenta.tipo === '4' ? 'Tarjeta ' : (this.nuevaCuenta.tipo === '1' ? 'Cta Corriente ' : 'Cta Ahorro '));
+            this.nuevaCuenta.nombre = prefix + banco;
+        }
+    },
+    aplicarBancoEdit(banco) {
+        this.cuentaEdit.institucionFinanciera = banco;
+        if (!this.cuentaEdit.nombre || this.bancosSugeridos.some(b => this.cuentaEdit.nombre.includes(b))) {
+            const prefix = this.cuentaEdit.tipo === '3' ? 'Caja ' : (this.cuentaEdit.tipo === '4' ? 'Tarjeta ' : (this.cuentaEdit.tipo === '1' ? 'Cta Corriente ' : 'Cta Ahorro '));
+            this.cuentaEdit.nombre = prefix + banco;
+        }
+    },
+    abrirCrear() {
+        this.nuevaCuenta = { nombre: '', institucionFinanciera: '', numeroCuenta: '', tipo: '2', moneda: '1', saldoInicial: '0.00', fuenteIngresoId: '' };
+        this.openModalCuenta = true;
+        this.$nextTick(() => { if (window.lucide) { lucide.createIcons(); } });
+    },
+    abrirEditar(cuenta) {
+        this.cuentaEdit = { ...cuenta };
+        this.openModalEditarCuenta = true;
+        this.$nextTick(() => { if (window.lucide) { lucide.createIcons(); } });
+    },
+    abrirTransferencia() {
+        this.openModalTransferencia = true;
+        this.$nextTick(() => { if (window.lucide) { lucide.createIcons(); } });
+    }
 }">
     <!-- Header Section -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -29,11 +76,11 @@
                     Inhabilitadas
                 </button>
             </div>
-            <button type="button" x-on:click="openModalTransferencia = true" class="btn-apple-secondary">
+            <button type="button" x-on:click="abrirTransferencia()" class="btn-apple-secondary">
                 <i data-lucide="arrow-left-right" class="w-4 h-4 text-[#0071e3] dark:text-[#2997ff]"></i>
                 <span>Transferir</span>
             </button>
-            <button type="button" x-on:click="openModalCuenta = true" class="btn-apple-primary">
+            <button type="button" x-on:click="abrirCrear()" class="btn-apple-primary">
                 <i data-lucide="plus" class="w-4 h-4"></i>
                 <span>Nueva Cuenta</span>
             </button>
@@ -73,7 +120,7 @@
                 Registra tus cuentas bancarias, tarjetas o cajas de efectivo en Pesos Dominicanos (RD$) o Dólares ($) para conciliar y dar seguimiento a tus fondos.
             </p>
 
-            <button type="button" x-on:click="openModalCuenta = true" class="btn-apple-primary px-6 py-2.5 text-sm">
+            <button type="button" x-on:click="abrirCrear()" class="btn-apple-primary px-6 py-2.5 text-sm">
                 <i data-lucide="plus" class="w-4 h-4"></i>
                 <span>Crear Mi Primera Cuenta</span>
             </button>
@@ -92,7 +139,22 @@
                         <div class="flex items-center justify-between gap-3 mb-4 min-w-0">
                             <div class="flex items-center gap-2.5 min-w-0 flex-1">
                                 <div class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center flex-shrink-0 @(!c.Activo ? "opacity-50" : "")">
-                                    <i data-lucide="landmark" class="w-4 h-4"></i>
+                                    @if (c.Tipo == FHouse.Core.Enums.TipoCuenta.Efectivo)
+                                    {
+                                        <i data-lucide="banknote" class="w-4 h-4"></i>
+                                    }
+                                    else if (c.Tipo == FHouse.Core.Enums.TipoCuenta.TarjetaCredito)
+                                    {
+                                        <i data-lucide="credit-card" class="w-4 h-4"></i>
+                                    }
+                                    else if (c.Tipo == FHouse.Core.Enums.TipoCuenta.BilleteraDigital)
+                                    {
+                                        <i data-lucide="smartphone" class="w-4 h-4"></i>
+                                    }
+                                    else
+                                    {
+                                        <i data-lucide="landmark" class="w-4 h-4"></i>
+                                    }
                                 </div>
                                 <div class="min-w-0 flex-1">
                                     <h3 class="font-bold text-base text-title tracking-tight truncate" title="@c.Nombre">@c.Nombre</h3>
@@ -105,7 +167,7 @@
                                 @if (c.Activo)
                                 {
                                     <span class="apple-badge @(c.Moneda == FHouse.Core.Enums.Moneda.USD ? "bg-purple-500/15 text-purple-400 border border-purple-500/30" : "bg-blue-500/15 text-blue-400 border border-blue-500/30") font-bold flex-shrink-0">
-                                        @c.Moneda
+                                        @(c.Moneda == FHouse.Core.Enums.Moneda.USD ? "USD ($)" : "DOP (RD$)")
                                     </span>
                                 }
                                 else
@@ -114,7 +176,7 @@
                                 }
 
                                 <button type="button" 
-                                        x-on:click="cuentaEdit = { id: @c.Id, nombre: '@HttpUtility.JavaScriptStringEncode(c.Nombre)', institucionFinanciera: '@HttpUtility.JavaScriptStringEncode(c.InstitucionFinanciera != null ? c.InstitucionFinanciera : "")', numeroCuenta: '@HttpUtility.JavaScriptStringEncode(c.NumeroCuenta != null ? c.NumeroCuenta : "")', tipo: '@((int)c.Tipo)', moneda: '@((int)c.Moneda)', fuenteIngresoId: '@(c.FuenteIngresoId.HasValue ? c.FuenteIngresoId.Value.ToString() : "")', activo: @(c.Activo ? "true" : "false") }; openModalEditarCuenta = true;" 
+                                        x-on:click="abrirEditar({ id: @c.Id, nombre: '@HttpUtility.JavaScriptStringEncode(c.Nombre)', institucionFinanciera: '@HttpUtility.JavaScriptStringEncode(c.InstitucionFinanciera != null ? c.InstitucionFinanciera : "")', numeroCuenta: '@HttpUtility.JavaScriptStringEncode(c.NumeroCuenta != null ? c.NumeroCuenta : "")', tipo: '@((int)c.Tipo)', moneda: '@((int)c.Moneda)', fuenteIngresoId: '@(c.FuenteIngresoId.HasValue ? c.FuenteIngresoId.Value.ToString() : "")', activo: @(c.Activo ? "true" : "false") })" 
                                         class="p-1.5 rounded-lg text-subtitle hover:text-[#0071e3] hover:bg-black/5 dark:hover:bg-white/5 transition-all flex-shrink-0"
                                         title="Editar Cuenta">
                                     <i data-lucide="edit-3" class="w-4 h-4"></i>
@@ -170,188 +232,465 @@
         </div>
     }
 
-    <!-- Modal: Nueva Cuenta -->
+    <!-- ========================================== -->
+    <!-- Modal: Nueva Cuenta (Apple FinTech Redesign) -->
+    <!-- ========================================== -->
     <div x-show="openModalCuenta" 
+         x-cloak
          x-transition:enter="transition ease-out duration-300"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
          x-transition:leave="transition ease-in duration-200"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0"
-         class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-md flex items-center justify-center p-4" 
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95"
+         class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-md p-3 sm:p-4 flex justify-center items-start sm:items-center min-h-screen py-6 sm:py-8"
          style="display: none;">
-        <div x-on:click.outside="openModalCuenta = false" class="apple-modal w-full max-w-md p-6 sm:p-8 text-left relative">
-            <button type="button" x-on:click="openModalCuenta = false" class="absolute top-6 right-6 text-subtitle hover:text-title">
-                <i data-lucide="x" class="w-5 h-5"></i>
-            </button>
+        
+        <div x-on:click.outside="openModalCuenta = false" class="apple-modal w-full max-w-xl p-5 sm:p-6 text-left relative overflow-hidden shadow-2xl border border-white/20 dark:border-white/10 my-auto flex flex-col max-h-[92vh]">
+            <!-- Subtle Top Glow -->
+            <div class="absolute -top-16 -right-16 w-48 h-48 bg-blue-500/15 rounded-full blur-3xl pointer-events-none"></div>
 
-            <h3 class="text-xl font-bold text-title tracking-tight mb-1">Nueva Cuenta / Caja</h3>
-            <p class="text-xs text-subtitle mb-6">Registra una cuenta bancaria, tarjeta o caja de efectivo.</p>
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between pb-3 mb-3 border-b border-black/5 dark:border-white/5 flex-shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#0071e3] to-[#2997ff] flex items-center justify-center text-white shadow-lg shadow-blue-500/25 flex-shrink-0">
+                        <i data-lucide="wallet-cards" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-title tracking-tight">Nueva Cuenta / Caja</h3>
+                        <p class="text-xs text-subtitle">Registra una cuenta bancaria, tarjeta o caja de efectivo.</p>
+                    </div>
+                </div>
+                <button type="button" x-on:click="openModalCuenta = false" class="p-1 rounded-full text-subtitle hover:text-title hover:bg-black/5 dark:hover:bg-white/5 transition-all">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
 
-            <form method="post" action="@Url.Action("Crear", "Cuenta")">
+            <form method="post" action="@Url.Action("Crear", "Cuenta")" class="flex flex-col flex-1 overflow-hidden min-h-0">
                 @Html.AntiForgeryToken()
 
-                <div class="mb-4">
-                    <label class="block text-xs font-medium text-subtitle mb-1.5">Nombre de la Cuenta</label>
-                    <input type="text" name="Nombre" required placeholder="Ej: Cuenta Nómina Banreservas, Caja Chica..." 
-                           class="apple-input" />
-                </div>
-
-                <div class="grid grid-cols-2 gap-4 mb-4">
+                <div class="overflow-y-auto pr-1 space-y-3.5 flex-1 custom-modal-scroll">
+                    <!-- Segmented Control: Moneda -->
                     <div>
-                        <label class="block text-xs font-medium text-subtitle mb-1.5">Banco / Entidad</label>
-                        <input type="text" name="InstitucionFinanciera" placeholder="Ej: Popular, BHD..." 
-                               class="apple-input" />
+                        <label class="block text-[11px] font-bold uppercase tracking-wider text-subtitle mb-1">Moneda Principal</label>
+                        <input type="hidden" name="Moneda" :value="nuevaCuenta.moneda" />
+                        <div class="grid grid-cols-2 p-1 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5">
+                            <button type="button" 
+                                    x-on:click="nuevaCuenta.moneda = '1'" 
+                                    :class="nuevaCuenta.moneda === '1' ? 'bg-white dark:bg-[#1c2b50] text-[#0071e3] dark:text-[#38bdf8] shadow-sm font-bold border border-black/5 dark:border-blue-500/30' : 'text-subtitle hover:text-title font-medium'"
+                                    class="py-1.5 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-all">
+                                <span class="w-2 h-2 rounded-full bg-[#0071e3] dark:bg-[#38bdf8]"></span>
+                                <span>DOP (RD$) - Peso Dominicano</span>
+                            </button>
+                            <button type="button" 
+                                    x-on:click="nuevaCuenta.moneda = '2'" 
+                                    :class="nuevaCuenta.moneda === '2' ? 'bg-white dark:bg-[#1c2b50] text-purple-600 dark:text-purple-400 shadow-sm font-bold border border-black/5 dark:border-purple-500/30' : 'text-subtitle hover:text-title font-medium'"
+                                    class="py-1.5 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-all">
+                                <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+                                <span>USD ($) - Dólar Americano</span>
+                            </button>
+                        </div>
                     </div>
 
+                    <!-- Account Type Selector (Interactive Card Grid) -->
                     <div>
-                        <label class="block text-xs font-medium text-subtitle mb-1.5">Moneda</label>
-                        <select name="Moneda" class="apple-select">
-                            <option value="1">DOP (RD$)</option>
-                            <option value="2">USD ($)</option>
-                        </select>
+                        <label class="block text-[11px] font-bold uppercase tracking-wider text-subtitle mb-1">Tipo de Cuenta o Fondo</label>
+                        <input type="hidden" name="Tipo" :value="nuevaCuenta.tipo" />
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            <!-- Ahorro (2) -->
+                            <button type="button" 
+                                    x-on:click="nuevaCuenta.tipo = '2'"
+                                    :class="nuevaCuenta.tipo === '2' ? 'border-[#0071e3] bg-[#0071e3]/10 dark:bg-blue-500/15 text-[#0071e3] dark:text-[#38bdf8] font-bold shadow-sm' : 'border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 text-subtitle hover:border-black/20 dark:hover:border-white/20 font-medium'"
+                                    class="p-2 rounded-xl border text-left flex items-center gap-2 transition-all">
+                                <i data-lucide="piggy-bank" class="w-4 h-4 flex-shrink-0 text-emerald-500"></i>
+                                <div class="min-w-0 flex-1 leading-tight">
+                                    <div class="text-xs truncate">Ahorro</div>
+                                    <div class="text-[10px] text-subtitle opacity-75 truncate">Cuenta personal</div>
+                                </div>
+                            </button>
+
+                            <!-- Corriente (1) -->
+                            <button type="button" 
+                                    x-on:click="nuevaCuenta.tipo = '1'"
+                                    :class="nuevaCuenta.tipo === '1' ? 'border-[#0071e3] bg-[#0071e3]/10 dark:bg-blue-500/15 text-[#0071e3] dark:text-[#38bdf8] font-bold shadow-sm' : 'border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 text-subtitle hover:border-black/20 dark:hover:border-white/20 font-medium'"
+                                    class="p-2 rounded-xl border text-left flex items-center gap-2 transition-all">
+                                <i data-lucide="landmark" class="w-4 h-4 flex-shrink-0 text-blue-500"></i>
+                                <div class="min-w-0 flex-1 leading-tight">
+                                    <div class="text-xs truncate">Corriente</div>
+                                    <div class="text-[10px] text-subtitle opacity-75 truncate">Cheques / Pagos</div>
+                                </div>
+                            </button>
+
+                            <!-- Efectivo (3) -->
+                            <button type="button" 
+                                    x-on:click="nuevaCuenta.tipo = '3'"
+                                    :class="nuevaCuenta.tipo === '3' ? 'border-[#0071e3] bg-[#0071e3]/10 dark:bg-blue-500/15 text-[#0071e3] dark:text-[#38bdf8] font-bold shadow-sm' : 'border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 text-subtitle hover:border-black/20 dark:hover:border-white/20 font-medium'"
+                                    class="p-2 rounded-xl border text-left flex items-center gap-2 transition-all">
+                                <i data-lucide="banknote" class="w-4 h-4 flex-shrink-0 text-amber-500"></i>
+                                <div class="min-w-0 flex-1 leading-tight">
+                                    <div class="text-xs truncate">Efectivo / Caja</div>
+                                    <div class="text-[10px] text-subtitle opacity-75 truncate">Caja chica</div>
+                                </div>
+                            </button>
+
+                            <!-- Tarjeta de Crédito (4) -->
+                            <button type="button" 
+                                    x-on:click="nuevaCuenta.tipo = '4'"
+                                    :class="nuevaCuenta.tipo === '4' ? 'border-[#0071e3] bg-[#0071e3]/10 dark:bg-blue-500/15 text-[#0071e3] dark:text-[#38bdf8] font-bold shadow-sm' : 'border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 text-subtitle hover:border-black/20 dark:hover:border-white/20 font-medium'"
+                                    class="p-2 rounded-xl border text-left flex items-center gap-2 transition-all">
+                                <i data-lucide="credit-card" class="w-4 h-4 flex-shrink-0 text-purple-500"></i>
+                                <div class="min-w-0 flex-1 leading-tight">
+                                    <div class="text-xs truncate">Tarjeta Crédito</div>
+                                    <div class="text-[10px] text-subtitle opacity-75 truncate">Línea de crédito</div>
+                                </div>
+                            </button>
+
+                            <!-- Billetera Digital (5) -->
+                            <button type="button" 
+                                    x-on:click="nuevaCuenta.tipo = '5'"
+                                    :class="nuevaCuenta.tipo === '5' ? 'border-[#0071e3] bg-[#0071e3]/10 dark:bg-blue-500/15 text-[#0071e3] dark:text-[#38bdf8] font-bold shadow-sm' : 'border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 text-subtitle hover:border-black/20 dark:hover:border-white/20 font-medium'"
+                                    class="p-2 rounded-xl border text-left flex items-center gap-2 transition-all col-span-2 sm:col-span-2">
+                                <i data-lucide="smartphone" class="w-4 h-4 flex-shrink-0 text-cyan-500"></i>
+                                <div class="min-w-0 flex-1 leading-tight">
+                                    <div class="text-xs truncate">Billetera Digital / Fintech</div>
+                                    <div class="text-[10px] text-subtitle opacity-75 truncate">PayPal, Qik, Mio, Tpago</div>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Quick Pick Bank Chips -->
+                    <div>
+                        <label class="block text-[11px] font-bold uppercase tracking-wider text-subtitle mb-1">Sugerencias Rápidas de Entidad</label>
+                        <div class="flex flex-wrap gap-1.5">
+                            <template x-for="banco in bancosSugeridos" :key="banco">
+                                <button type="button" 
+                                        x-on:click="aplicarBancoNueva(banco)"
+                                        :class="nuevaCuenta.institucionFinanciera === banco ? 'bg-[#0071e3] text-white shadow-sm font-semibold' : 'bg-black/5 dark:bg-white/5 text-subtitle hover:text-title hover:bg-black/10 dark:hover:bg-white/10'"
+                                        class="text-xs px-2.5 py-1 rounded-full border border-black/5 dark:border-white/5 transition-all active:scale-95 flex items-center gap-1">
+                                    <i data-lucide="plus" class="w-3 h-3 opacity-60"></i>
+                                    <span x-text="banco"></span>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Nombre y Banco -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-subtitle mb-1">Nombre de la Cuenta <span class="text-rose-500">*</span></label>
+                            <div class="relative">
+                                <i data-lucide="tag" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-subtitle pointer-events-none"></i>
+                                <input type="text" 
+                                       name="Nombre" 
+                                       x-model="nuevaCuenta.nombre" 
+                                       required 
+                                       placeholder="Ej: Nómina Banreservas, Caja Principal..." 
+                                       class="apple-input apple-input-icon-left text-xs py-2 px-3" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-subtitle mb-1">Banco o Entidad</label>
+                            <div class="relative">
+                                <i data-lucide="building-2" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-subtitle pointer-events-none"></i>
+                                <input type="text" 
+                                       name="InstitucionFinanciera" 
+                                       x-model="nuevaCuenta.institucionFinanciera" 
+                                       placeholder="Ej: Banreservas, Popular, BHD..." 
+                                       class="apple-input apple-input-icon-left text-xs py-2 px-3" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Número de Cuenta y Saldo Inicial -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-subtitle mb-1">Número de Cuenta <span class="text-[10px] text-muted-app font-normal">(Opcional)</span></label>
+                            <div class="relative">
+                                <i data-lucide="hash" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-subtitle pointer-events-none"></i>
+                                <input type="text" 
+                                       name="NumeroCuenta" 
+                                       x-model="nuevaCuenta.numeroCuenta" 
+                                       placeholder="Ej: **** 4589" 
+                                       class="apple-input apple-input-icon-left font-mono text-xs py-2 px-3" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-subtitle mb-1">Saldo Inicial</label>
+                            <div class="relative">
+                                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-subtitle pointer-events-none" x-text="nuevaCuenta.moneda === '2' ? '$' : 'RD$'"></span>
+                                <input type="number" 
+                                       step="0.01" 
+                                       name="SaldoInicial" 
+                                       x-model="nuevaCuenta.saldoInicial" 
+                                       required 
+                                       placeholder="0.00" 
+                                       class="apple-input pl-14 text-sm font-bold py-2 px-3" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fuente / Negocio Asociado -->
+                    <div>
+                        <label class="block text-xs font-semibold text-subtitle mb-1">Fuente / Negocio Asociado <span class="text-[10px] text-muted-app font-normal">(Opcional)</span></label>
+                        <div class="relative">
+                            <i data-lucide="briefcase" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-subtitle pointer-events-none"></i>
+                            <select name="FuenteIngresoId" x-model="nuevaCuenta.fuenteIngresoId" class="apple-select apple-input-icon-left text-xs py-2 px-3">
+                                <option value="">-- Cuenta General del Hogar (Sin negocio específico) --</option>
+                                @if (ViewBag.Fuentes != null)
+                                {
+                                    foreach (var f in ((IEnumerable<FHouse.Services.DTOs.FuenteIngresoDetalleDto>)ViewBag.Fuentes).Where(x => x.Activo))
+                                    {
+                                        <option value="@f.Id">@f.Nombre</option>
+                                    }
+                                }
+                            </select>
+                        </div>
                     </div>
                 </div>
 
-                <div class="mb-4">
-                    <label class="block text-xs font-medium text-subtitle mb-1.5">Número de Cuenta / Identificador (Opcional)</label>
-                    <input type="text" name="NumeroCuenta" placeholder="Ej: **** 4589" 
-                           class="apple-input font-mono" />
-                </div>
-
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <label class="block text-xs font-medium text-subtitle mb-1.5">Tipo</label>
-                        <select name="Tipo" class="apple-select">
-                            <option value="1">Corriente</option>
-                            <option value="2" selected>Ahorro</option>
-                            <option value="3">Efectivo</option>
-                            <option value="4">Tarjeta de Crédito</option>
-                            <option value="5">Billetera Digital</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-medium text-subtitle mb-1.5">Saldo Inicial</label>
-                        <input type="number" step="0.01" name="SaldoInicial" value="0.00" 
-                               class="apple-input font-bold" />
-                    </div>
-                </div>
-
-                <div class="mb-6">
-                    <label class="block text-xs font-medium text-subtitle mb-1.5">Fuente / Negocio Asociado (Opcional)</label>
-                    <select name="FuenteIngresoId" class="apple-select">
-                        <option value="">-- Cuenta General del Hogar --</option>
-                        @if (ViewBag.Fuentes != null)
-                        {
-                            foreach (var f in ((IEnumerable<FHouse.Services.DTOs.FuenteIngresoDetalleDto>)ViewBag.Fuentes).Where(x => x.Activo))
-                            {
-                                <option value="@f.Id">@f.Nombre</option>
-                            }
-                        }
-                    </select>
-                </div>
-
-                <div class="flex items-center justify-end gap-3 pt-2">
-                    <button type="button" x-on:click="openModalCuenta = false" class="btn-apple-secondary text-xs">Cancelar</button>
-                    <button type="submit" class="btn-apple-primary text-xs">Crear Cuenta</button>
+                <!-- Botones de Acción -->
+                <div class="flex items-center justify-end gap-3 pt-3 mt-3 border-t border-black/5 dark:border-white/5 flex-shrink-0">
+                    <button type="button" x-on:click="openModalCuenta = false" class="btn-apple-secondary text-xs px-4 py-2">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn-apple-primary text-xs px-4 py-2 flex items-center gap-2">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                        <span>Crear Cuenta</span>
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Modal: Editar Cuenta -->
+    <!-- ========================================== -->
+    <!-- Modal: Editar Cuenta (Apple FinTech Redesign) -->
+    <!-- ========================================== -->
     <div x-show="openModalEditarCuenta" 
+         x-cloak
          x-transition:enter="transition ease-out duration-300"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
          x-transition:leave="transition ease-in duration-200"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0"
-         class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-md flex items-center justify-center p-4" 
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95"
+         class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-md p-3 sm:p-4 flex justify-center items-start sm:items-center min-h-screen py-6 sm:py-8"
          style="display: none;">
-        <div x-on:click.outside="openModalEditarCuenta = false" class="apple-modal w-full max-w-md p-6 sm:p-8 text-left relative">
-            <button type="button" x-on:click="openModalEditarCuenta = false" class="absolute top-6 right-6 text-subtitle hover:text-title">
-                <i data-lucide="x" class="w-5 h-5"></i>
-            </button>
+        
+        <div x-on:click.outside="openModalEditarCuenta = false" class="apple-modal w-full max-w-xl p-5 sm:p-6 text-left relative overflow-hidden shadow-2xl border border-white/20 dark:border-white/10 my-auto flex flex-col max-h-[92vh]">
+            <!-- Subtle Top Glow -->
+            <div class="absolute -top-16 -right-16 w-48 h-48 bg-purple-500/15 rounded-full blur-3xl pointer-events-none"></div>
 
-            <h3 class="text-xl font-bold text-title tracking-tight mb-1">Actualizar Cuenta</h3>
-            <p class="text-xs text-subtitle mb-6">Modifica los datos, tipo o entidad de esta cuenta bancaria o caja.</p>
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between pb-3 mb-3 border-b border-black/5 dark:border-white/5 flex-shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-purple-500/25 flex-shrink-0">
+                        <i data-lucide="edit-3" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-title tracking-tight">Actualizar Cuenta</h3>
+                        <p class="text-xs text-subtitle">Modifica los datos, tipo o entidad de esta cuenta bancaria o caja.</p>
+                    </div>
+                </div>
+                <button type="button" x-on:click="openModalEditarCuenta = false" class="p-1 rounded-full text-subtitle hover:text-title hover:bg-black/5 dark:hover:bg-white/5 transition-all">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
 
-            <form method="post" :action="'@Url.Action("Actualizar", "Cuenta")/' + cuentaEdit.id">
+            <form method="post" :action="'@Url.Action("Actualizar", "Cuenta")/' + cuentaEdit.id" class="flex flex-col flex-1 overflow-hidden min-h-0">
                 @Html.AntiForgeryToken()
 
-                <div class="mb-4">
-                    <label class="block text-xs font-medium text-subtitle mb-1.5">Nombre de la Cuenta</label>
-                    <input type="text" name="Nombre" x-model="cuentaEdit.nombre" required placeholder="Ej: Cuenta Nómina" 
-                           class="apple-input text-sm" />
-                </div>
-
-                <div class="grid grid-cols-2 gap-4 mb-4">
+                <div class="overflow-y-auto pr-1 space-y-3.5 flex-1 custom-modal-scroll">
+                    <!-- Segmented Control: Moneda -->
                     <div>
-                        <label class="block text-xs font-medium text-subtitle mb-1.5">Banco / Entidad</label>
-                        <input type="text" name="InstitucionFinanciera" x-model="cuentaEdit.institucionFinanciera" placeholder="Ej: Popular, BHD..." 
-                               class="apple-input text-sm" />
+                        <label class="block text-[11px] font-bold uppercase tracking-wider text-subtitle mb-1">Moneda</label>
+                        <input type="hidden" name="Moneda" :value="cuentaEdit.moneda" />
+                        <div class="grid grid-cols-2 p-1 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5">
+                            <button type="button" 
+                                    x-on:click="cuentaEdit.moneda = '1'" 
+                                    :class="cuentaEdit.moneda == '1' ? 'bg-white dark:bg-[#1c2b50] text-[#0071e3] dark:text-[#38bdf8] shadow-sm font-bold border border-black/5 dark:border-blue-500/30' : 'text-subtitle hover:text-title font-medium'"
+                                    class="py-1.5 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-all">
+                                <span class="w-2 h-2 rounded-full bg-[#0071e3] dark:bg-[#38bdf8]"></span>
+                                <span>DOP (RD$) - Peso Dominicano</span>
+                            </button>
+                            <button type="button" 
+                                    x-on:click="cuentaEdit.moneda = '2'" 
+                                    :class="cuentaEdit.moneda == '2' ? 'bg-white dark:bg-[#1c2b50] text-purple-600 dark:text-purple-400 shadow-sm font-bold border border-black/5 dark:border-purple-500/30' : 'text-subtitle hover:text-title font-medium'"
+                                    class="py-1.5 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-all">
+                                <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+                                <span>USD ($) - Dólar Americano</span>
+                            </button>
+                        </div>
                     </div>
 
+                    <!-- Account Type Selector (Interactive Card Grid) -->
                     <div>
-                        <label class="block text-xs font-medium text-subtitle mb-1.5">Moneda</label>
-                        <select name="Moneda" x-model="cuentaEdit.moneda" class="apple-select text-sm">
-                            <option value="1">DOP (RD$)</option>
-                            <option value="2">USD ($)</option>
-                        </select>
+                        <label class="block text-[11px] font-bold uppercase tracking-wider text-subtitle mb-1">Tipo de Cuenta o Fondo</label>
+                        <input type="hidden" name="Tipo" :value="cuentaEdit.tipo" />
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            <!-- Ahorro (2) -->
+                            <button type="button" 
+                                    x-on:click="cuentaEdit.tipo = '2'"
+                                    :class="cuentaEdit.tipo == '2' ? 'border-[#0071e3] bg-[#0071e3]/10 dark:bg-blue-500/15 text-[#0071e3] dark:text-[#38bdf8] font-bold shadow-sm' : 'border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 text-subtitle hover:border-black/20 dark:hover:border-white/20 font-medium'"
+                                    class="p-2 rounded-xl border text-left flex items-center gap-2 transition-all">
+                                <i data-lucide="piggy-bank" class="w-4 h-4 flex-shrink-0 text-emerald-500"></i>
+                                <div class="min-w-0 flex-1 leading-tight">
+                                    <div class="text-xs truncate">Ahorro</div>
+                                    <div class="text-[10px] text-subtitle opacity-75 truncate">Cuenta personal</div>
+                                </div>
+                            </button>
+
+                            <!-- Corriente (1) -->
+                            <button type="button" 
+                                    x-on:click="cuentaEdit.tipo = '1'"
+                                    :class="cuentaEdit.tipo == '1' ? 'border-[#0071e3] bg-[#0071e3]/10 dark:bg-blue-500/15 text-[#0071e3] dark:text-[#38bdf8] font-bold shadow-sm' : 'border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 text-subtitle hover:border-black/20 dark:hover:border-white/20 font-medium'"
+                                    class="p-2 rounded-xl border text-left flex items-center gap-2 transition-all">
+                                <i data-lucide="landmark" class="w-4 h-4 flex-shrink-0 text-blue-500"></i>
+                                <div class="min-w-0 flex-1 leading-tight">
+                                    <div class="text-xs truncate">Corriente</div>
+                                    <div class="text-[10px] text-subtitle opacity-75 truncate">Cheques / Pagos</div>
+                                </div>
+                            </button>
+
+                            <!-- Efectivo (3) -->
+                            <button type="button" 
+                                    x-on:click="cuentaEdit.tipo = '3'"
+                                    :class="cuentaEdit.tipo == '3' ? 'border-[#0071e3] bg-[#0071e3]/10 dark:bg-blue-500/15 text-[#0071e3] dark:text-[#38bdf8] font-bold shadow-sm' : 'border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 text-subtitle hover:border-black/20 dark:hover:border-white/20 font-medium'"
+                                    class="p-2 rounded-xl border text-left flex items-center gap-2 transition-all">
+                                <i data-lucide="banknote" class="w-4 h-4 flex-shrink-0 text-amber-500"></i>
+                                <div class="min-w-0 flex-1 leading-tight">
+                                    <div class="text-xs truncate">Efectivo / Caja</div>
+                                    <div class="text-[10px] text-subtitle opacity-75 truncate">Caja chica</div>
+                                </div>
+                            </button>
+
+                            <!-- Tarjeta de Crédito (4) -->
+                            <button type="button" 
+                                    x-on:click="cuentaEdit.tipo = '4'"
+                                    :class="cuentaEdit.tipo == '4' ? 'border-[#0071e3] bg-[#0071e3]/10 dark:bg-blue-500/15 text-[#0071e3] dark:text-[#38bdf8] font-bold shadow-sm' : 'border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 text-subtitle hover:border-black/20 dark:hover:border-white/20 font-medium'"
+                                    class="p-2 rounded-xl border text-left flex items-center gap-2 transition-all">
+                                <i data-lucide="credit-card" class="w-4 h-4 flex-shrink-0 text-purple-500"></i>
+                                <div class="min-w-0 flex-1 leading-tight">
+                                    <div class="text-xs truncate">Tarjeta Crédito</div>
+                                    <div class="text-[10px] text-subtitle opacity-75 truncate">Línea de crédito</div>
+                                </div>
+                            </button>
+
+                            <!-- Billetera Digital (5) -->
+                            <button type="button" 
+                                    x-on:click="cuentaEdit.tipo = '5'"
+                                    :class="cuentaEdit.tipo == '5' ? 'border-[#0071e3] bg-[#0071e3]/10 dark:bg-blue-500/15 text-[#0071e3] dark:text-[#38bdf8] font-bold shadow-sm' : 'border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 text-subtitle hover:border-black/20 dark:hover:border-white/20 font-medium'"
+                                    class="p-2 rounded-xl border text-left flex items-center gap-2 transition-all col-span-2 sm:col-span-2">
+                                <i data-lucide="smartphone" class="w-4 h-4 flex-shrink-0 text-cyan-500"></i>
+                                <div class="min-w-0 flex-1 leading-tight">
+                                    <div class="text-xs truncate">Billetera Digital / Fintech</div>
+                                    <div class="text-[10px] text-subtitle opacity-75 truncate">PayPal, Qik, Mio, Tpago</div>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Quick Pick Bank Chips -->
+                    <div>
+                        <label class="block text-[11px] font-bold uppercase tracking-wider text-subtitle mb-1">Sugerencias Rápidas de Entidad</label>
+                        <div class="flex flex-wrap gap-1.5">
+                            <template x-for="banco in bancosSugeridos" :key="banco">
+                                <button type="button" 
+                                        x-on:click="aplicarBancoEdit(banco)"
+                                        :class="cuentaEdit.institucionFinanciera === banco ? 'bg-[#0071e3] text-white shadow-sm font-semibold' : 'bg-black/5 dark:bg-white/5 text-subtitle hover:text-title hover:bg-black/10 dark:hover:bg-white/10'"
+                                        class="text-xs px-2.5 py-1 rounded-full border border-black/5 dark:border-white/5 transition-all active:scale-95 flex items-center gap-1">
+                                    <i data-lucide="plus" class="w-3 h-3 opacity-60"></i>
+                                    <span x-text="banco"></span>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Nombre y Banco -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-subtitle mb-1">Nombre de la Cuenta <span class="text-rose-500">*</span></label>
+                            <div class="relative">
+                                <i data-lucide="tag" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-subtitle pointer-events-none"></i>
+                                <input type="text" 
+                                       name="Nombre" 
+                                       x-model="cuentaEdit.nombre" 
+                                       required 
+                                       placeholder="Ej: Nómina Banreservas..." 
+                                       class="apple-input apple-input-icon-left text-xs py-2 px-3" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-subtitle mb-1">Banco o Entidad</label>
+                            <div class="relative">
+                                <i data-lucide="building-2" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-subtitle pointer-events-none"></i>
+                                <input type="text" 
+                                       name="InstitucionFinanciera" 
+                                       x-model="cuentaEdit.institucionFinanciera" 
+                                       placeholder="Ej: Banreservas, Popular, BHD..." 
+                                       class="apple-input apple-input-icon-left text-xs py-2 px-3" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Número de Cuenta y Fuente -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-subtitle mb-1">Número de Cuenta</label>
+                            <div class="relative">
+                                <i data-lucide="hash" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-subtitle pointer-events-none"></i>
+                                <input type="text" 
+                                       name="NumeroCuenta" 
+                                       x-model="cuentaEdit.numeroCuenta" 
+                                       placeholder="Ej: **** 4589" 
+                                       class="apple-input apple-input-icon-left font-mono text-xs py-2 px-3" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-subtitle mb-1">Fuente / Negocio Asociado</label>
+                            <div class="relative">
+                                <i data-lucide="briefcase" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-subtitle pointer-events-none"></i>
+                                <select name="FuenteIngresoId" x-model="cuentaEdit.fuenteIngresoId" class="apple-select apple-input-icon-left text-xs py-2 px-3">
+                                    <option value="">-- Cuenta General del Hogar --</option>
+                                    @if (ViewBag.Fuentes != null)
+                                    {
+                                        foreach (var f in ((IEnumerable<FHouse.Services.DTOs.FuenteIngresoDetalleDto>)ViewBag.Fuentes).Where(x => x.Activo))
+                                        {
+                                            <option value="@f.Id">@f.Nombre</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs text-subtitle flex items-start gap-2.5">
+                        <i data-lucide="shield-check" class="w-4 h-4 text-[#0071e3] dark:text-[#38bdf8] flex-shrink-0 mt-0.5"></i>
+                        <span class="leading-relaxed"><strong>Integridad de datos:</strong> Si esta cuenta posee movimientos vinculados, al dar de baja pasará a estado inhabilitado para proteger tu balance histórico.</span>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <label class="block text-xs font-medium text-subtitle mb-1.5">Tipo</label>
-                        <select name="Tipo" x-model="cuentaEdit.tipo" class="apple-select text-sm">
-                            <option value="1">Corriente</option>
-                            <option value="2">Ahorro</option>
-                            <option value="3">Efectivo</option>
-                            <option value="4">Tarjeta de Crédito</option>
-                            <option value="5">Billetera Digital</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-medium text-subtitle mb-1.5">Número de Cuenta</label>
-                        <input type="text" name="NumeroCuenta" x-model="cuentaEdit.numeroCuenta" placeholder="Ej: **** 4589" 
-                               class="apple-input font-mono text-sm" />
-                    </div>
-                </div>
-
-                <div class="mb-6">
-                    <label class="block text-xs font-medium text-subtitle mb-1.5">Fuente / Negocio Asociado (Opcional)</label>
-                    <select name="FuenteIngresoId" x-model="cuentaEdit.fuenteIngresoId" class="apple-select text-sm">
-                        <option value="">-- Cuenta General del Hogar --</option>
-                        @if (ViewBag.Fuentes != null)
-                        {
-                            foreach (var f in ((IEnumerable<FHouse.Services.DTOs.FuenteIngresoDetalleDto>)ViewBag.Fuentes).Where(x => x.Activo))
-                            {
-                                <option value="@f.Id">@f.Nombre</option>
-                            }
-                        }
-                    </select>
-                </div>
-
-                <div class="p-3 mb-4 rounded-xl bg-black/5 dark:bg-white/5 text-[11px] text-subtitle flex items-start gap-2">
-                    <i data-lucide="shield-check" class="w-4 h-4 text-[#0071e3] flex-shrink-0 mt-0.5"></i>
-                    <span><strong>Protección de relaciones:</strong> Si esta cuenta posee movimientos o transferencias vinculadas, el sistema la inhabilitará para proteger el historial financiero.</span>
-                </div>
-
-                <div class="flex items-center justify-between pt-2">
+                <!-- Botones de Acción -->
+                <div class="flex items-center justify-between pt-3 mt-3 border-t border-black/5 dark:border-white/5 flex-shrink-0">
                     <button type="button" 
                             x-on:click="if (confirm('¿Deseas dar de baja o eliminar esta cuenta? Si tiene movimientos vinculados, será inhabilitada automáticamente.')) { $refs.formEliminarCuenta.submit(); }" 
-                            class="text-xs text-rose-500 hover:text-rose-600 font-medium flex items-center gap-1">
+                            class="text-xs text-rose-500 hover:text-rose-600 font-semibold flex items-center gap-1.5 px-3 py-2 rounded-xl hover:bg-rose-500/10 transition-all">
                         <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                        <span>Dar de baja / Eliminar</span>
+                        <span>Dar de baja</span>
                     </button>
 
                     <div class="flex items-center gap-3">
-                        <button type="button" x-on:click="openModalEditarCuenta = false" class="btn-apple-secondary text-xs">Cancelar</button>
-                        <button type="submit" class="btn-apple-primary text-xs">Guardar Cambios</button>
+                        <button type="button" x-on:click="openModalEditarCuenta = false" class="btn-apple-secondary text-xs px-4 py-2">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn-apple-primary text-xs px-4 py-2 flex items-center gap-2">
+                            <i data-lucide="check" class="w-4 h-4"></i>
+                            <span>Guardar Cambios</span>
+                        </button>
                     </div>
                 </div>
             </form>
@@ -362,70 +701,109 @@
         </div>
     </div>
 
-    <!-- Modal: Transferencia entre Cuentas -->
+    <!-- ========================================== -->
+    <!-- Modal: Transferencia entre Cuentas (Apple FinTech Redesign) -->
+    <!-- ========================================== -->
     <div x-show="openModalTransferencia" 
+         x-cloak
          x-transition:enter="transition ease-out duration-300"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
          x-transition:leave="transition ease-in duration-200"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0"
-         class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-md flex items-center justify-center p-4" 
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95"
+         class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-md p-3 sm:p-4 flex justify-center items-start sm:items-center min-h-screen py-6 sm:py-8"
          style="display: none;">
-        <div x-on:click.outside="openModalTransferencia = false" class="apple-modal w-full max-w-md p-6 sm:p-8 text-left relative">
-            <button type="button" x-on:click="openModalTransferencia = false" class="absolute top-6 right-6 text-subtitle hover:text-title">
+        
+        <div x-on:click.outside="openModalTransferencia = false" class="apple-modal w-full max-w-lg p-5 sm:p-6 text-left relative overflow-hidden shadow-2xl border border-white/20 dark:border-white/10 my-auto flex flex-col max-h-[92vh]">
+            <!-- Close Button -->
+            <button type="button" x-on:click="openModalTransferencia = false" class="absolute top-6 right-6 p-1.5 rounded-full text-subtitle hover:text-title hover:bg-black/5 dark:hover:bg-white/5 transition-all">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
 
-            <h3 class="text-xl font-bold text-title tracking-tight mb-1">Transferencia Interna</h3>
-            <p class="text-xs text-subtitle mb-6">Mover fondos entre cuentas del hogar o negocios.</p>
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between pb-3 mb-3 border-b border-black/5 dark:border-white/5 flex-shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-lg shadow-emerald-500/25 flex-shrink-0">
+                        <i data-lucide="arrow-left-right" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-title tracking-tight">Transferencia Interna</h3>
+                        <p class="text-xs text-subtitle">Mueve fondos entre tus cuentas del hogar o negocios.</p>
+                    </div>
+                </div>
+                <button type="button" x-on:click="openModalTransferencia = false" class="p-1 rounded-full text-subtitle hover:text-title hover:bg-black/5 dark:hover:bg-white/5 transition-all">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
 
-            <form method="post" action="@Url.Action("Transferir", "Cuenta")">
+            <form method="post" action="@Url.Action("Transferir", "Cuenta")" class="flex flex-col flex-1 overflow-hidden min-h-0">
                 @Html.AntiForgeryToken()
 
-                <div class="mb-4">
-                    <label class="block text-xs font-medium text-subtitle mb-1.5">Cuenta de Origen (Salida)</label>
-                    <select name="CuentaOrigenId" required class="apple-select">
-                        <option value="">-- Selecciona cuenta de débito --</option>
-                        @if (Model != null)
-                        {
-                            foreach (var c in Model.Where(x => x.Activo))
-                            {
-                                <option value="@c.Id">@c.Nombre (@c.Moneda - Saldo: @c.SaldoActual.ToString("N2"))</option>
-                            }
-                        }
-                    </select>
+                <div class="overflow-y-auto pr-1 space-y-3.5 flex-1 custom-modal-scroll">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-subtitle mb-1">Cuenta Origen (Salida) <span class="text-rose-500">*</span></label>
+                            <div class="relative">
+                                <i data-lucide="arrow-up-right" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-rose-500 pointer-events-none"></i>
+                                <select name="CuentaOrigenId" required class="apple-select apple-input-icon-left text-xs py-2 px-3">
+                                    <option value="">-- Debitar de --</option>
+                                    @if (Model != null)
+                                    {
+                                        foreach (var c in Model.Where(x => x.Activo))
+                                        {
+                                            <option value="@c.Id">@c.Nombre (@c.Moneda - Saldo: @c.SaldoActual.ToString("N2"))</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-subtitle mb-1">Cuenta Destino (Entrada) <span class="text-rose-500">*</span></label>
+                            <div class="relative">
+                                <i data-lucide="arrow-down-left" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500 pointer-events-none"></i>
+                                <select name="CuentaDestinoId" required class="apple-select apple-input-icon-left text-xs py-2 px-3">
+                                    <option value="">-- Acreditar a --</option>
+                                    @if (Model != null)
+                                    {
+                                        foreach (var c in Model.Where(x => x.Activo))
+                                        {
+                                            <option value="@c.Id">@c.Nombre (@c.Moneda)</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-subtitle mb-1">Monto a Transferir <span class="text-rose-500">*</span></label>
+                        <div class="relative">
+                            <i data-lucide="coins" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-subtitle pointer-events-none"></i>
+                            <input type="number" step="0.01" min="0.01" name="Monto" required placeholder="0.00" 
+                                   class="apple-input apple-input-icon-left text-sm font-bold py-2 px-3" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-subtitle mb-1">Concepto / Motivo <span class="text-[10px] text-muted-app font-normal">(Opcional)</span></label>
+                        <div class="relative">
+                            <i data-lucide="file-text" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-subtitle pointer-events-none"></i>
+                            <input type="text" name="Comentario" placeholder="Ej: Pago de tarjeta, fondo para gastos del fin de semana..." 
+                                   class="apple-input apple-input-icon-left text-xs py-2 px-3" />
+                        </div>
+                    </div>
                 </div>
 
-                <div class="mb-4">
-                    <label class="block text-xs font-medium text-subtitle mb-1.5">Cuenta de Destino (Entrada)</label>
-                    <select name="CuentaDestinoId" required class="apple-select">
-                        <option value="">-- Selecciona cuenta de crédito --</option>
-                        @if (Model != null)
-                        {
-                            foreach (var c in Model.Where(x => x.Activo))
-                            {
-                                <option value="@c.Id">@c.Nombre (@c.Moneda)</option>
-                            }
-                        }
-                    </select>
-                </div>
-
-                <div class="mb-4">
-                    <label class="block text-xs font-medium text-subtitle mb-1.5">Monto a Transferir</label>
-                    <input type="number" step="0.01" min="0.01" name="Monto" required placeholder="0.00" 
-                           class="apple-input text-lg font-bold" />
-                </div>
-
-                <div class="mb-6">
-                    <label class="block text-xs font-medium text-subtitle mb-1.5">Comentario / Motivo</label>
-                    <input type="text" name="Comentario" placeholder="Ej: Pago de tarjeta, fondeo de caja..." 
-                           class="apple-input" />
-                </div>
-
-                <div class="flex items-center justify-end gap-3 pt-2">
-                    <button type="button" x-on:click="openModalTransferencia = false" class="btn-apple-secondary text-xs">Cancelar</button>
-                    <button type="submit" class="btn-apple-primary text-xs">Ejecutar Transferencia</button>
+                <div class="flex items-center justify-end gap-3 pt-3 mt-3 border-t border-black/5 dark:border-white/5 flex-shrink-0">
+                    <button type="button" x-on:click="openModalTransferencia = false" class="btn-apple-secondary text-xs px-4 py-2">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn-apple-primary text-xs px-4 py-2 flex items-center gap-2">
+                        <i data-lucide="arrow-left-right" class="w-4 h-4"></i>
+                        <span>Ejecutar Transferencia</span>
+                    </button>
                 </div>
             </form>
         </div>

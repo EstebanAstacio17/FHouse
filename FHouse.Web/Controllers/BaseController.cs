@@ -112,6 +112,12 @@ namespace FHouse.Web.Controllers
 
         protected string GetRolUsuario()
         {
+            // 1. Per-request in-memory cache (HttpContext.Items)
+            if (HttpContext != null && HttpContext.Items["__FH_UserRole"] != null)
+            {
+                return HttpContext.Items["__FH_UserRole"].ToString();
+            }
+
             var usuarioId = GetUsuarioId();
             var familiaId = GetFamiliaId();
 
@@ -126,6 +132,7 @@ namespace FHouse.Web.Controllers
                         {
                             var rolStr = uf.Rol.ToString();
                             Session["Rol"] = rolStr;
+                            if (HttpContext != null) HttpContext.Items["__FH_UserRole"] = rolStr;
                             return rolStr;
                         }
                     }
@@ -135,7 +142,9 @@ namespace FHouse.Web.Controllers
 
             if (Session["Rol"] != null)
             {
-                return Session["Rol"].ToString();
+                var sRol = Session["Rol"].ToString();
+                if (HttpContext != null) HttpContext.Items["__FH_UserRole"] = sRol;
+                return sRol;
             }
 
             var identity = User?.Identity as ClaimsIdentity;
@@ -143,9 +152,11 @@ namespace FHouse.Web.Controllers
             if (claim != null && !string.IsNullOrWhiteSpace(claim.Value))
             {
                 Session["Rol"] = claim.Value;
+                if (HttpContext != null) HttpContext.Items["__FH_UserRole"] = claim.Value;
                 return claim.Value;
             }
 
+            if (HttpContext != null) HttpContext.Items["__FH_UserRole"] = "Miembro";
             return "Miembro";
         }
 
@@ -164,30 +175,10 @@ namespace FHouse.Web.Controllers
         }
 
         /// <summary>
-        /// Verifica si el usuario tiene rol Admin dentro de la familia consultando en tiempo real.
+        /// Verifica si el usuario tiene rol Admin dentro de la familia consultando en tiempo real con caché por petición.
         /// </summary>
         protected bool EsAdminFamilia()
         {
-            var usuarioId = GetUsuarioId();
-            var familiaId = GetFamiliaId();
-
-            if (!string.IsNullOrEmpty(usuarioId) && familiaId > 0)
-            {
-                try
-                {
-                    using (var db = new FHouse.Infrastructure.Data.FHouseDbContext())
-                    {
-                        var uf = System.Linq.Queryable.FirstOrDefault(db.UsuariosFamilia, u => u.UsuarioId == usuarioId && u.FamiliaId == familiaId && u.Activo);
-                        if (uf != null && uf.Rol == FHouse.Core.Enums.RolFamilia.Admin)
-                        {
-                            Session["Rol"] = "Admin";
-                            return true;
-                        }
-                    }
-                }
-                catch { }
-            }
-
             var rol = GetRolUsuario();
             if (string.Equals(rol, "Admin", System.StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(rol, "Administrador", System.StringComparison.OrdinalIgnoreCase))
@@ -199,6 +190,7 @@ namespace FHouse.Web.Controllers
             if (string.Equals(email, "admin@fhouse.com", System.StringComparison.OrdinalIgnoreCase))
             {
                 Session["Rol"] = "Admin";
+                if (HttpContext != null) HttpContext.Items["__FH_UserRole"] = "Admin";
                 return true;
             }
 

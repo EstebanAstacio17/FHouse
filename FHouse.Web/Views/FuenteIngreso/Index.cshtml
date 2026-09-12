@@ -139,137 +139,188 @@
         </div>
     }
 
+    <!-- ========================================== -->
     <!-- Modal: Nueva Fuente de Ingreso -->
+    <!-- ========================================== -->
     <div x-show="openModalFuente" 
+         x-cloak
          x-transition:enter="transition ease-out duration-300"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
          x-transition:leave="transition ease-in duration-200"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0"
-         class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-md flex items-center justify-center p-4" 
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95"
+         class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-md p-3 sm:p-4 flex justify-center items-start sm:items-center min-h-screen py-6 sm:py-8" 
          style="display: none;">
-        <div x-on:click.outside="openModalFuente = false" class="apple-modal w-full max-w-md p-6 sm:p-8 text-left relative">
-            <button type="button" x-on:click="openModalFuente = false" class="absolute top-6 right-6 text-subtitle hover:text-title">
+        <div x-on:click.outside="openModalFuente = false" class="apple-modal w-full max-w-lg p-5 sm:p-6 text-left relative overflow-hidden shadow-2xl border border-white/20 dark:border-white/10 my-auto flex flex-col max-h-[92vh]">
+            <button type="button" x-on:click="openModalFuente = false" class="absolute top-5 right-5 p-1.5 rounded-full text-subtitle hover:text-title hover:bg-black/5 dark:hover:bg-white/5 transition-all z-10">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
 
-            <h3 class="text-xl font-bold text-title tracking-tight mb-1">Nueva Fuente de Ingreso</h3>
-            <p class="text-xs text-subtitle mb-6">Registra una empresa, empleo, renta o actividad económica.</p>
+            <div class="flex items-center gap-3 mb-4 flex-shrink-0">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/25 flex-shrink-0">
+                    <i data-lucide="briefcase" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg sm:text-xl font-bold text-title tracking-tight">Nueva Fuente de Ingreso</h3>
+                    <p class="text-xs text-subtitle">Empresa, empleo, renta o actividad económica.</p>
+                </div>
+            </div>
 
-            <form method="post" action="@Url.Action("Crear", "FuenteIngreso")">
+            <form method="post" action="@Url.Action("Crear", "FuenteIngreso")" class="flex flex-col min-h-0 flex-1">
                 @Html.AntiForgeryToken()
 
-                <div class="mb-4">
-                    <label class="block text-xs font-medium text-subtitle mb-1.5">Nombre del Negocio / Fuente</label>
-                    <input type="text" name="Nombre" required placeholder="Ej: Empresa ABC, Salario Esteban, Alquiler Apto..." 
-                           class="apple-input text-sm" />
-                </div>
-
-                <div class="grid grid-cols-2 gap-4 mb-4">
+                <div class="overflow-y-auto pr-1 space-y-3.5 flex-1 custom-modal-scroll">
                     <div>
-                        <label class="block text-xs font-medium text-subtitle mb-1.5">Tipo de Actividad</label>
-                        <select name="Tipo" class="apple-select text-sm">
-                            <option value="1">Negocio</option>
-                            <option value="2">Empleo</option>
-                            <option value="3">Renta</option>
-                            <option value="4">Inversión</option>
-                            <option value="5">Freelance</option>
-                            <option value="6">Otro</option>
-                        </select>
+                        <label class="block text-xs font-semibold text-subtitle mb-1.5">Nombre del Negocio / Fuente <span class="text-rose-500">*</span></label>
+                        <div class="relative">
+                            <i data-lucide="briefcase" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-subtitle pointer-events-none"></i>
+                            <input type="text" name="Nombre" required placeholder="Ej: Empresa ABC, Salario Esteban, Alquiler..." 
+                                   class="apple-input apple-input-icon-left text-sm" />
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div>
+                            <label class="block text-xs font-semibold text-subtitle mb-1.5">Tipo de Actividad</label>
+                            <div class="relative">
+                                <i data-lucide="tag" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-subtitle pointer-events-none"></i>
+                                <select name="Tipo" class="apple-select apple-input-icon-left text-sm">
+                                    <option value="1">Negocio</option>
+                                    <option value="2">Empleo</option>
+                                    <option value="3">Renta</option>
+                                    <option value="4">Inversión</option>
+                                    <option value="5">Freelance</option>
+                                    <option value="6">Otro</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-subtitle mb-1.5">Color Distintivo</label>
+                            <div class="flex items-center gap-2">
+                                <input type="color" name="ColorIdentificador" value="#0071E3" 
+                                       class="w-10 h-10 rounded-xl border border-black/10 dark:border-white/10 p-0.5 cursor-pointer flex-shrink-0 bg-transparent" />
+                                <span class="text-xs text-subtitle font-mono">Identificador visual</span>
+                            </div>
+                        </div>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-medium text-subtitle mb-1.5">Color Distintivo</label>
-                        <input type="color" name="ColorIdentificador" value="#0071E3" 
-                               class="apple-input h-11 p-1 cursor-pointer" />
+                        <label class="block text-xs font-semibold text-subtitle mb-1.5">Descripción <span class="text-[10px] text-muted-app font-normal">(Opcional)</span></label>
+                        <div class="relative">
+                            <textarea name="Descripcion" rows="2" placeholder="Detalles de la operación o negocio..." 
+                                      class="apple-textarea text-sm"></textarea>
+                        </div>
                     </div>
                 </div>
 
-                <div class="mb-6">
-                    <label class="block text-xs font-medium text-subtitle mb-1.5">Descripción (Opcional)</label>
-                    <textarea name="Descripcion" rows="3" placeholder="Detalles de la operación..." 
-                              class="apple-textarea text-sm"></textarea>
-                </div>
-
-                <div class="flex items-center justify-end gap-3 pt-2">
+                <div class="flex items-center justify-end gap-3 pt-3 mt-3 border-t border-black/5 dark:border-white/5 flex-shrink-0">
                     <button type="button" x-on:click="openModalFuente = false" class="btn-apple-secondary text-xs">Cancelar</button>
-                    <button type="submit" class="btn-apple-primary text-xs">Guardar Fuente</button>
+                    <button type="submit" class="btn-apple-primary text-xs flex items-center gap-2">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                        <span>Guardar Fuente</span>
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- ========================================== -->
     <!-- Modal: Editar Fuente de Ingreso -->
+    <!-- ========================================== -->
     <div x-show="openModalEditarFuente" 
+         x-cloak
          x-transition:enter="transition ease-out duration-300"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
          x-transition:leave="transition ease-in duration-200"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0"
-         class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-md flex items-center justify-center p-4" 
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95"
+         class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-md p-3 sm:p-4 flex justify-center items-start sm:items-center min-h-screen py-6 sm:py-8" 
          style="display: none;">
-        <div x-on:click.outside="openModalEditarFuente = false" class="apple-modal w-full max-w-md p-6 sm:p-8 text-left relative">
-            <button type="button" x-on:click="openModalEditarFuente = false" class="absolute top-6 right-6 text-subtitle hover:text-title">
+        <div x-on:click.outside="openModalEditarFuente = false" class="apple-modal w-full max-w-lg p-5 sm:p-6 text-left relative overflow-hidden shadow-2xl border border-white/20 dark:border-white/10 my-auto flex flex-col max-h-[92vh]">
+            <button type="button" x-on:click="openModalEditarFuente = false" class="absolute top-5 right-5 p-1.5 rounded-full text-subtitle hover:text-title hover:bg-black/5 dark:hover:bg-white/5 transition-all z-10">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
 
-            <h3 class="text-xl font-bold text-title tracking-tight mb-1">Actualizar Fuente de Ingreso</h3>
-            <p class="text-xs text-subtitle mb-6">Modifica los detalles, tipo o color de esta fuente.</p>
+            <div class="flex items-center gap-3 mb-4 flex-shrink-0">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-purple-500/25 flex-shrink-0">
+                    <i data-lucide="edit-3" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg sm:text-xl font-bold text-title tracking-tight">Actualizar Fuente</h3>
+                    <p class="text-xs text-subtitle">Modifica los detalles, tipo o color de esta entidad.</p>
+                </div>
+            </div>
 
-            <form method="post" :action="'@Url.Action("Actualizar", "FuenteIngreso")/' + fuenteEdit.id">
+            <form method="post" :action="'@Url.Action("Actualizar", "FuenteIngreso")/' + fuenteEdit.id" class="flex flex-col min-h-0 flex-1">
                 @Html.AntiForgeryToken()
 
-                <div class="mb-4">
-                    <label class="block text-xs font-medium text-subtitle mb-1.5">Nombre del Negocio / Fuente</label>
-                    <input type="text" name="Nombre" x-model="fuenteEdit.nombre" required placeholder="Ej: Portadorza Corp" 
-                           class="apple-input text-sm" />
-                </div>
-
-                <div class="grid grid-cols-2 gap-4 mb-4">
+                <div class="overflow-y-auto pr-1 space-y-3.5 flex-1 custom-modal-scroll">
                     <div>
-                        <label class="block text-xs font-medium text-subtitle mb-1.5">Tipo de Actividad</label>
-                        <select name="Tipo" x-model="fuenteEdit.tipo" class="apple-select text-sm">
-                            <option value="1">Negocio</option>
-                            <option value="2">Empleo</option>
-                            <option value="3">Renta</option>
-                            <option value="4">Inversión</option>
-                            <option value="5">Freelance</option>
-                            <option value="6">Otro</option>
-                        </select>
+                        <label class="block text-xs font-semibold text-subtitle mb-1.5">Nombre del Negocio / Fuente <span class="text-rose-500">*</span></label>
+                        <div class="relative">
+                            <i data-lucide="briefcase" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-subtitle pointer-events-none"></i>
+                            <input type="text" name="Nombre" x-model="fuenteEdit.nombre" required placeholder="Ej: Portadorza Corp" 
+                                   class="apple-input apple-input-icon-left text-sm" />
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div>
+                            <label class="block text-xs font-semibold text-subtitle mb-1.5">Tipo de Actividad</label>
+                            <div class="relative">
+                                <i data-lucide="tag" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-subtitle pointer-events-none"></i>
+                                <select name="Tipo" x-model="fuenteEdit.tipo" class="apple-select apple-input-icon-left text-sm">
+                                    <option value="1">Negocio</option>
+                                    <option value="2">Empleo</option>
+                                    <option value="3">Renta</option>
+                                    <option value="4">Inversión</option>
+                                    <option value="5">Freelance</option>
+                                    <option value="6">Otro</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-subtitle mb-1.5">Color Distintivo</label>
+                            <div class="flex items-center gap-2">
+                                <input type="color" name="ColorIdentificador" x-model="fuenteEdit.color" 
+                                       class="w-10 h-10 rounded-xl border border-black/10 dark:border-white/10 p-0.5 cursor-pointer flex-shrink-0 bg-transparent" />
+                                <span class="text-xs text-subtitle font-mono">Color distintivo</span>
+                            </div>
+                        </div>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-medium text-subtitle mb-1.5">Color Distintivo</label>
-                        <input type="color" name="ColorIdentificador" x-model="fuenteEdit.color" 
-                               class="apple-input h-11 p-1 cursor-pointer" />
+                        <label class="block text-xs font-semibold text-subtitle mb-1.5">Descripción <span class="text-[10px] text-muted-app font-normal">(Opcional)</span></label>
+                        <div class="relative">
+                            <textarea name="Descripcion" x-model="fuenteEdit.descripcion" rows="2" placeholder="Detalles de la operación..." 
+                                      class="apple-textarea text-sm"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-[11px] text-subtitle flex items-start gap-2">
+                        <i data-lucide="shield-check" class="w-4 h-4 text-[#0071e3] dark:text-[#38bdf8] flex-shrink-0 mt-0.5"></i>
+                        <span class="leading-tight"><strong>Protección de datos:</strong> Si esta fuente posee movimientos, cuentas o presupuestos asociados, al dar de baja pasará a inhabilitada para proteger tu balance histórico.</span>
                     </div>
                 </div>
 
-                <div class="mb-6">
-                    <label class="block text-xs font-medium text-subtitle mb-1.5">Descripción (Opcional)</label>
-                    <textarea name="Descripcion" x-model="fuenteEdit.descripcion" rows="3" placeholder="Detalles de la operación..." 
-                              class="apple-textarea text-sm"></textarea>
-                </div>
-
-                <div class="p-3 mb-4 rounded-xl bg-black/5 dark:bg-white/5 text-[11px] text-subtitle flex items-start gap-2">
-                    <i data-lucide="shield-check" class="w-4 h-4 text-[#0071e3] flex-shrink-0 mt-0.5"></i>
-                    <span><strong>Protección de relaciones:</strong> Si esta fuente posee movimientos, cuentas o presupuestos asociados, el sistema la inhabilitará para proteger el historial sin alterar datos relacionados.</span>
-                </div>
-
-                <div class="flex items-center justify-between pt-2">
-                    <!-- Form to delete/inhabilitar fuente -->
+                <div class="flex items-center justify-between pt-3 mt-3 border-t border-black/5 dark:border-white/5 flex-shrink-0">
                     <button type="button" 
                             x-on:click="if (confirm('¿Deseas dar de baja o eliminar esta fuente? Si tiene movimientos vinculados, será inhabilitada automáticamente.')) { $refs.formEliminar.submit(); }" 
-                            class="text-xs text-rose-500 hover:text-rose-600 font-medium flex items-center gap-1">
+                            class="text-xs text-rose-500 hover:text-rose-600 font-semibold flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-rose-500/10 transition-all">
                         <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                        <span>Dar de baja / Eliminar</span>
+                        <span>Dar de baja</span>
                     </button>
 
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-2.5">
                         <button type="button" x-on:click="openModalEditarFuente = false" class="btn-apple-secondary text-xs">Cancelar</button>
-                        <button type="submit" class="btn-apple-primary text-xs">Guardar Cambios</button>
+                        <button type="submit" class="btn-apple-primary text-xs flex items-center gap-2">
+                            <i data-lucide="check" class="w-4 h-4"></i>
+                            <span>Guardar Cambios</span>
+                        </button>
                     </div>
                 </div>
             </form>
@@ -280,3 +331,4 @@
         </div>
     </div>
 </div>
+

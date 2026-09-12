@@ -281,16 +281,42 @@ namespace FHouse.Services.Implementations
 
         public async Task<ResultadoOperacion<IEnumerable<FuenteIngresoDetalleDto>>> ObtenerPorFamiliaAsync(int familiaId)
         {
-            var fuentes = await _uow.FuentesIngreso.ObtenerPorFamiliaAsync(familiaId);
-            var dtos = new List<FuenteIngresoDetalleDto>();
+            var fuentes = (await _uow.FuentesIngreso.ObtenerPorFamiliaAsync(familiaId)).ToList();
+            if (!fuentes.Any())
+            {
+                return ResultadoOperacion<IEnumerable<FuenteIngresoDetalleDto>>.Ok(Enumerable.Empty<FuenteIngresoDetalleDto>());
+            }
 
+            // Single query optimization: Fetch all transactions for the family in 1 query
+            var transaccionesFamilia = (await _uow.Transacciones.ObtenerPorFamiliaAsync(familiaId))
+                .Where(t => t.FuenteIngresoId.HasValue)
+                .GroupBy(t => t.FuenteIngresoId.Value)
+                .ToDictionary(
+                    g => g.Key,
+                    g => new
+                    {
+                        Ingresos = g.Where(t => t.Tipo == TipoTransaccion.Ingreso).Sum(t => t.MontoEnDOP),
+                        Egresos = g.Where(t => t.Tipo == TipoTransaccion.Egreso).Sum(t => t.MontoEnDOP),
+                        Cantidad = g.Count()
+                    }
+                );
+
+            var dtos = new List<FuenteIngresoDetalleDto>();
             foreach (var f in fuentes)
             {
                 var dto = _mapper.Map<FuenteIngresoDetalleDto>(f);
-                var transacciones = await _uow.Transacciones.ObtenerPorFuenteAsync(f.Id);
-                dto.TotalIngresosDOP = transacciones.Where(t => t.Tipo == TipoTransaccion.Ingreso).Sum(t => t.MontoEnDOP);
-                dto.TotalEgresosDOP = transacciones.Where(t => t.Tipo == TipoTransaccion.Egreso).Sum(t => t.MontoEnDOP);
-                dto.CantidadTransacciones = transacciones.Count();
+                if (transaccionesFamilia.TryGetValue(f.Id, out var stats))
+                {
+                    dto.TotalIngresosDOP = stats.Ingresos;
+                    dto.TotalEgresosDOP = stats.Egresos;
+                    dto.CantidadTransacciones = stats.Cantidad;
+                }
+                else
+                {
+                    dto.TotalIngresosDOP = 0m;
+                    dto.TotalEgresosDOP = 0m;
+                    dto.CantidadTransacciones = 0;
+                }
                 dtos.Add(dto);
             }
 
@@ -1037,9 +1063,15 @@ namespace FHouse.Services.Implementations
             var inicioMes = new DateTime(anio, mes, 1);
             var finMes = inicioMes.AddMonths(1).AddTicks(-1);
 
+            // Single query optimization: Fetch all expense transactions for the period in 1 query
+            var transaccionesPeriodo = (await _uow.Transacciones.ObtenerFiltradasAsync(
+                familiaId, inicioMes, finMes, null, null, null, TipoTransaccion.Egreso, null)).ToList();
+
             foreach (var p in dtos)
             {
-                var trans = await _uow.Transacciones.ObtenerFiltradasAsync(familiaId, inicioMes, finMes, p.FuenteIngresoId, null, p.CategoriaId, TipoTransaccion.Egreso, null);
+                var trans = transaccionesPeriodo.Where(t =>
+                    (!p.CategoriaId.HasValue || t.CategoriaId == p.CategoriaId.Value) &&
+                    (!p.FuenteIngresoId.HasValue || t.FuenteIngresoId == p.FuenteIngresoId.Value));
                 p.MontoEjecutadoDOP = trans.Sum(t => t.MontoEnDOP);
             }
 

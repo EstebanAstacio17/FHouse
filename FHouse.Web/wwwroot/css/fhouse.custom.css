@@ -376,3 +376,10 @@ body {
   background: var(--border-strong);
   border-radius: 980px;
 }
+
+.custom-modal-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+  -webkit-overflow-scrolling: touch;
+}
+

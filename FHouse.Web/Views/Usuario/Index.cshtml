@@ -204,168 +204,235 @@
         </div>
     </div>
 
+    <!-- ========================================== -->
     <!-- Modal: Editar Nombre de Familia -->
+    <!-- ========================================== -->
     <div x-show="openModalEditarFamilia" 
+         x-cloak
          x-transition:enter="transition ease-out duration-300"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
          x-transition:leave="transition ease-in duration-200"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0"
-         class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-md flex items-center justify-center p-4" 
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95"
+         class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-md p-3 sm:p-4 flex justify-center items-start sm:items-center min-h-screen py-6 sm:py-8" 
          style="display: none;">
-        <div x-on:click.outside="openModalEditarFamilia = false" class="apple-modal w-full max-w-md p-6 sm:p-8 text-left relative">
-            <button type="button" x-on:click="openModalEditarFamilia = false" class="absolute top-6 right-6 text-subtitle hover:text-title">
+        <div x-on:click.outside="openModalEditarFamilia = false" class="apple-modal w-full max-w-md p-5 sm:p-6 text-left relative overflow-hidden shadow-2xl border border-white/20 dark:border-white/10 my-auto flex flex-col max-h-[92vh]">
+            <button type="button" x-on:click="openModalEditarFamilia = false" class="absolute top-5 right-5 p-1.5 rounded-full text-subtitle hover:text-title hover:bg-black/5 dark:hover:bg-white/5 transition-all z-10">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
 
-            <h3 class="text-xl font-bold text-title tracking-tight mb-1">Configurar Hogar / Familia</h3>
-            <p class="text-xs text-subtitle mb-6">Actualiza el nombre representativo de tu grupo familiar.</p>
+            <div class="flex items-center gap-3 mb-4 flex-shrink-0">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#0071e3] to-[#2997ff] flex items-center justify-center text-white shadow-lg shadow-blue-500/25 flex-shrink-0">
+                    <i data-lucide="home" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg sm:text-xl font-bold text-title tracking-tight">Configurar Hogar</h3>
+                    <p class="text-xs text-subtitle">Nombre representativo de tu grupo familiar.</p>
+                </div>
+            </div>
 
-            <form method="post" action="@Url.Action("ActualizarFamilia", "Usuario")">
+            <form method="post" action="@Url.Action("ActualizarFamilia", "Usuario")" class="flex flex-col min-h-0 flex-1">
                 @Html.AntiForgeryToken()
 
-                <div class="mb-6">
-                    <label class="block text-xs font-medium text-subtitle mb-1.5">Nombre de la Familia</label>
-                    <input type="text" name="Nombre" value="@nombreFamilia" required placeholder="Ej: Familia Gómez, Casa Central..." 
-                           class="apple-input text-sm font-semibold" />
+                <div class="overflow-y-auto pr-1 space-y-3.5 flex-1 custom-modal-scroll">
+                    <div>
+                        <label class="block text-xs font-semibold text-subtitle mb-1.5">Nombre de la Familia <span class="text-rose-500">*</span></label>
+                        <div class="relative">
+                            <i data-lucide="home" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-subtitle pointer-events-none"></i>
+                            <input type="text" name="Nombre" value="@nombreFamilia" required placeholder="Ej: Familia Gómez, Casa Central..." 
+                                   class="apple-input apple-input-icon-left text-sm font-semibold" />
+                        </div>
+                    </div>
                 </div>
 
-                <div class="flex items-center justify-end gap-3 pt-2">
+                <div class="flex items-center justify-end gap-3 pt-3 mt-3 border-t border-black/5 dark:border-white/5 flex-shrink-0">
                     <button type="button" x-on:click="openModalEditarFamilia = false" class="btn-apple-secondary text-xs">Cancelar</button>
-                    <button type="submit" class="btn-apple-primary text-xs">Guardar Cambios</button>
+                    <button type="submit" class="btn-apple-primary text-xs flex items-center gap-2">
+                        <i data-lucide="check" class="w-4 h-4"></i>
+                        <span>Guardar Cambios</span>
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- ========================================== -->
     <!-- Modal: Invitar / Agregar Miembro Directo -->
+    <!-- ========================================== -->
     <div x-show="openModalInvitar" 
+         x-cloak
          x-transition:enter="transition ease-out duration-300"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
          x-transition:leave="transition ease-in duration-200"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0"
-         class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-md flex items-center justify-center p-4" 
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95"
+         class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-md p-3 sm:p-4 flex justify-center items-start sm:items-center min-h-screen py-6 sm:py-8" 
          style="display: none;">
-        <div x-on:click.outside="openModalInvitar = false" class="apple-modal w-full max-w-md p-6 sm:p-8 text-left relative">
-            <button type="button" x-on:click="openModalInvitar = false" class="absolute top-6 right-6 text-subtitle hover:text-title">
+        <div x-on:click.outside="openModalInvitar = false" class="apple-modal w-full max-w-lg p-5 sm:p-6 text-left relative overflow-hidden shadow-2xl border border-white/20 dark:border-white/10 my-auto flex flex-col max-h-[92vh]">
+            <button type="button" x-on:click="openModalInvitar = false" class="absolute top-5 right-5 p-1.5 rounded-full text-subtitle hover:text-title hover:bg-black/5 dark:hover:bg-white/5 transition-all z-10">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
 
-            <h3 class="text-xl font-bold text-title tracking-tight mb-1">Crear Acceso a Miembro</h3>
-            <p class="text-xs text-subtitle mb-6">Crea un acceso directo con rol específico para un integrante del hogar.</p>
+            <div class="flex items-center gap-3 mb-4 flex-shrink-0">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-lg shadow-emerald-500/25 flex-shrink-0">
+                    <i data-lucide="user-plus" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg sm:text-xl font-bold text-title tracking-tight">Crear Acceso a Miembro</h3>
+                    <p class="text-xs text-subtitle">Crea un acceso con rol específico para un familiar.</p>
+                </div>
+            </div>
 
-            <form method="post" action="@Url.Action("Invitar", "Usuario")">
+            <form method="post" action="@Url.Action("Invitar", "Usuario")" class="flex flex-col min-h-0 flex-1">
                 @Html.AntiForgeryToken()
 
-                <div class="mb-4">
-                    <label class="block text-xs font-medium text-subtitle mb-1.5">Nombre Completo</label>
-                    <input type="text" name="NombreCompleto" required placeholder="Ej: Esteban Gómez" 
-                           class="apple-input text-sm" />
-                </div>
-
-                <div class="mb-4">
-                    <label class="block text-xs font-medium text-subtitle mb-1.5">Correo Electrónico</label>
-                    <input type="email" name="Email" required placeholder="ejemplo@correo.com" 
-                           class="apple-input text-sm" />
-                </div>
-
-                <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="overflow-y-auto pr-1 space-y-3.5 flex-1 custom-modal-scroll">
                     <div>
-                        <label class="block text-xs font-medium text-subtitle mb-1.5">Rol en F House</label>
-                        <select name="Rol" class="apple-select text-sm">
-                            <option value="1">Admin</option>
-                            <option value="2">Contador</option>
-                            <option value="3" selected>Miembro</option>
-                            <option value="4">Limitado</option>
-                        </select>
+                        <label class="block text-xs font-semibold text-subtitle mb-1.5">Nombre Completo <span class="text-rose-500">*</span></label>
+                        <div class="relative">
+                            <i data-lucide="user" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-subtitle pointer-events-none"></i>
+                            <input type="text" name="NombreCompleto" required placeholder="Ej: Esteban Gómez" 
+                                   class="apple-input apple-input-icon-left text-sm" />
+                        </div>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-medium text-subtitle mb-1.5">Alias / Parentesco</label>
-                        <input type="text" name="AliasFamiliar" placeholder="Ej: Padre, Hijo, Contador..." 
-                               class="apple-input text-sm" />
+                        <label class="block text-xs font-semibold text-subtitle mb-1.5">Correo Electrónico <span class="text-rose-500">*</span></label>
+                        <div class="relative">
+                            <i data-lucide="mail" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-subtitle pointer-events-none"></i>
+                            <input type="email" name="Email" required placeholder="ejemplo@correo.com" 
+                                   class="apple-input apple-input-icon-left text-sm" />
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div>
+                            <label class="block text-xs font-semibold text-subtitle mb-1.5">Rol en el Hogar</label>
+                            <div class="relative">
+                                <i data-lucide="shield-check" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-subtitle pointer-events-none"></i>
+                                <select name="Rol" class="apple-select apple-input-icon-left text-sm">
+                                    <option value="1">Admin (Control Total)</option>
+                                    <option value="2">Contador (Ver y Reportes)</option>
+                                    <option value="3" selected>Miembro (Gastos/Ingresos)</option>
+                                    <option value="4">Limitado (Solo Lectura)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-subtitle mb-1.5">Alias / Parentesco <span class="text-[10px] text-muted-app font-normal">(Opcional)</span></label>
+                            <div class="relative">
+                                <i data-lucide="tag" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-subtitle pointer-events-none"></i>
+                                <input type="text" name="AliasFamiliar" placeholder="Ej: Padre, Hijo, Contador..." 
+                                       class="apple-input apple-input-icon-left text-sm" />
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="flex items-center justify-end gap-3 pt-2">
+                <div class="flex items-center justify-end gap-3 pt-3 mt-3 border-t border-black/5 dark:border-white/5 flex-shrink-0">
                     <button type="button" x-on:click="openModalInvitar = false" class="btn-apple-secondary text-xs">Cancelar</button>
-                    <button type="submit" class="btn-apple-primary text-xs">Crear Miembro</button>
+                    <button type="submit" class="btn-apple-primary text-xs flex items-center gap-2">
+                        <i data-lucide="user-plus" class="w-4 h-4"></i>
+                        <span>Crear Miembro</span>
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- ========================================== -->
     <!-- Modal: Editar Miembro Familiar -->
+    <!-- ========================================== -->
     <div x-show="openModalEditarMiembro" 
+         x-cloak
          x-transition:enter="transition ease-out duration-300"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
          x-transition:leave="transition ease-in duration-200"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0"
-         class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-md flex items-center justify-center p-4" 
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95"
+         class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-md p-3 sm:p-4 flex justify-center items-start sm:items-center min-h-screen py-6 sm:py-8" 
          style="display: none;">
-        <div x-on:click.outside="openModalEditarMiembro = false" class="apple-modal w-full max-w-md p-6 sm:p-8 text-left relative">
-            <button type="button" x-on:click="openModalEditarMiembro = false" class="absolute top-6 right-6 text-subtitle hover:text-title">
+        <div x-on:click.outside="openModalEditarMiembro = false" class="apple-modal w-full max-w-lg p-5 sm:p-6 text-left relative overflow-hidden shadow-2xl border border-white/20 dark:border-white/10 my-auto flex flex-col max-h-[92vh]">
+            <button type="button" x-on:click="openModalEditarMiembro = false" class="absolute top-5 right-5 p-1.5 rounded-full text-subtitle hover:text-title hover:bg-black/5 dark:hover:bg-white/5 transition-all z-10">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
 
-            <h3 class="text-xl font-bold text-title tracking-tight mb-1">Editar Integrante Familiar</h3>
-            <p class="text-xs text-subtitle mb-6" x-text="'Modificando datos y permisos de ' + miembroEdit.nombre"></p>
+            <div class="flex items-center gap-3 mb-4 flex-shrink-0">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-purple-500/25 flex-shrink-0">
+                    <i data-lucide="user-cog" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg sm:text-xl font-bold text-title tracking-tight">Editar Integrante</h3>
+                    <p class="text-xs text-subtitle" x-text="'Permisos de ' + miembroEdit.nombre"></p>
+                </div>
+            </div>
 
-            <form method="post" action="@Url.Action("ActualizarMiembro", "Usuario")">
+            <form method="post" action="@Url.Action("ActualizarMiembro", "Usuario")" class="flex flex-col min-h-0 flex-1">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="Id" :value="miembroEdit.id" />
 
-                <!-- Banner de Seguridad para Edición Propia -->
-                <div x-show="miembroEdit.esMismoUsuario" class="mb-4 p-3 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-xs text-[#0071e3] dark:text-[#2997ff] flex items-start gap-2.5">
-                    <i data-lucide="shield-alert" class="w-4 h-4 flex-shrink-0 mt-0.5"></i>
-                    <div>
-                        <strong class="font-semibold block">Perfil Propio:</strong>
-                        <span>Por seguridad, ningún usuario puede cambiar su propio rol ni auto-inhabilitarse. Solo otro administrador puede modificar tu nivel de acceso.</span>
+                <div class="overflow-y-auto pr-1 space-y-3.5 flex-1 custom-modal-scroll">
+                    <!-- Banner de Seguridad para Edición Propia -->
+                    <div x-show="miembroEdit.esMismoUsuario" class="p-3 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-xs text-[#0071e3] dark:text-[#2997ff] flex items-start gap-2.5">
+                        <i data-lucide="shield-alert" class="w-4 h-4 flex-shrink-0 mt-0.5"></i>
+                        <div class="leading-relaxed">
+                            <strong class="font-semibold block">Perfil Propio:</strong>
+                            <span>Por seguridad, ningún usuario puede cambiar su propio rol ni auto-inhabilitarse. Solo otro administrador puede modificar tu nivel de acceso.</span>
+                        </div>
                     </div>
-                </div>
 
-                <div class="mb-4">
-                    <label class="block text-xs font-medium text-subtitle mb-1.5">Alias / Parentesco</label>
-                    <input type="text" name="AliasFamiliar" :value="miembroEdit.alias" placeholder="Ej: Esposa, Hijo Mayor, Administrador..." 
-                           class="apple-input text-sm font-medium" />
-                </div>
-
-                <!-- Selector de Rol (Solo visible al editar a OTROS miembros) -->
-                <div class="mb-4" x-show="!miembroEdit.esMismoUsuario">
-                    <label class="block text-xs font-medium text-subtitle mb-1.5">Rol en el Hogar</label>
-                    <select name="Rol" x-model="miembroEdit.rol" class="apple-select text-sm">
-                        <option value="1">Admin</option>
-                        <option value="2">Contador</option>
-                        <option value="3">Miembro</option>
-                        <option value="4">Limitado</option>
-                    </select>
-                </div>
-                <input type="hidden" name="Rol" :value="miembroEdit.rol" x-show="miembroEdit.esMismoUsuario" />
-
-                <!-- Estado de Acceso (Solo visible al editar a OTROS miembros) -->
-                <div class="mb-6 p-3 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 flex items-center justify-between" x-show="!miembroEdit.esMismoUsuario">
                     <div>
-                        <span class="block text-xs font-semibold text-title">Estado de Acceso</span>
-                        <span class="text-[11px] text-subtitle" x-text="miembroEdit.activo ? 'El usuario tiene acceso activo al hogar.' : 'El usuario se encuentra inhabilitado.'"></span>
+                        <label class="block text-xs font-semibold text-subtitle mb-1.5">Alias / Parentesco</label>
+                        <div class="relative">
+                            <i data-lucide="tag" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-subtitle pointer-events-none"></i>
+                            <input type="text" name="AliasFamiliar" :value="miembroEdit.alias" placeholder="Ej: Esposa, Hijo Mayor, Administrador..." 
+                                   class="apple-input apple-input-icon-left text-sm font-medium" />
+                        </div>
                     </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" name="Activo" value="true" x-model="miembroEdit.activo" class="sr-only peer" />
-                        <div class="w-11 h-6 bg-zinc-300 peer-focus:outline-none rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-zinc-600 peer-checked:bg-[#34c759]"></div>
-                    </label>
-                </div>
-                <input type="hidden" name="Activo" :value="miembroEdit.activo" x-show="miembroEdit.esMismoUsuario" />
 
-                <div class="flex items-center justify-end gap-3 pt-2">
+                    <!-- Selector de Rol (Solo visible al editar a OTROS miembros) -->
+                    <div x-show="!miembroEdit.esMismoUsuario">
+                        <label class="block text-xs font-semibold text-subtitle mb-1.5">Rol en el Hogar</label>
+                        <div class="relative">
+                            <i data-lucide="shield-check" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-subtitle pointer-events-none"></i>
+                            <select name="Rol" x-model="miembroEdit.rol" class="apple-select apple-input-icon-left text-sm">
+                                <option value="1">Admin (Control Total)</option>
+                                <option value="2">Contador (Ver y Reportes)</option>
+                                <option value="3">Miembro (Gastos/Ingresos)</option>
+                                <option value="4">Limitado (Solo Lectura)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <input type="hidden" name="Rol" :value="miembroEdit.rol" x-show="miembroEdit.esMismoUsuario" />
+
+                    <!-- Estado de Acceso (Solo visible al editar a OTROS miembros) -->
+                    <div class="p-3 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 flex items-center justify-between" x-show="!miembroEdit.esMismoUsuario">
+                        <div>
+                            <span class="block text-xs font-semibold text-title">Estado de Acceso</span>
+                            <span class="text-[11px] text-subtitle" x-text="miembroEdit.activo ? 'El usuario tiene acceso activo al hogar.' : 'El usuario se encuentra inhabilitado.'"></span>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="Activo" value="true" x-model="miembroEdit.activo" class="sr-only peer" />
+                            <div class="w-11 h-6 bg-zinc-300 peer-focus:outline-none rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-zinc-600 peer-checked:bg-[#34c759]"></div>
+                        </label>
+                    </div>
+                    <input type="hidden" name="Activo" :value="miembroEdit.activo" x-show="miembroEdit.esMismoUsuario" />
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-3 mt-3 border-t border-black/5 dark:border-white/5 flex-shrink-0">
                     <button type="button" x-on:click="openModalEditarMiembro = false" class="btn-apple-secondary text-xs">Cancelar</button>
-                    <button type="submit" class="btn-apple-primary text-xs">Guardar Cambios</button>
+                    <button type="submit" class="btn-apple-primary text-xs flex items-center gap-2">
+                        <i data-lucide="check" class="w-4 h-4"></i>
+                        <span>Guardar Cambios</span>
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
 

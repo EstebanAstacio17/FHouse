@@ -110,25 +110,25 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.addEventListener('fuenteCreada', function () {
         mostrarToast('Fuente de ingreso creada con éxito.', 'success');
         cerrarModalTransaccion();
-        setTimeout(() => window.location.reload(), 600);
+        if (window.lucide) window.lucide.createIcons();
     });
 
     document.body.addEventListener('cuentaCreada', function () {
         mostrarToast('Cuenta bancaria agregada exitosamente.', 'success');
         cerrarModalTransaccion();
-        setTimeout(() => window.location.reload(), 600);
+        if (window.lucide) window.lucide.createIcons();
     });
 
     document.body.addEventListener('transferenciaExitosa', function () {
         mostrarToast('Transferencia completada correctamente.', 'success');
         cerrarModalTransaccion();
-        setTimeout(() => window.location.reload(), 600);
+        if (window.lucide) window.lucide.createIcons();
     });
 
     document.body.addEventListener('categoriaCreada', function () {
         mostrarToast('Categoría creada exitosamente.', 'success');
         cerrarModalTransaccion();
-        setTimeout(() => window.location.reload(), 600);
+        if (window.lucide) window.lucide.createIcons();
     });
 
     if (window.lucide) {
@@ -155,4 +155,28 @@ function mostrarToast(mensaje, tipo = 'info') {
         toast.classList.add('translate-y-4', 'opacity-0');
         setTimeout(() => toast.remove(), 300);
     }, 4000);
+}
+
+// Auto-Logout por Inactividad (5 minutos)
+function inicializarAutoLogout(minutos) {
+    minutos = minutos || 5;
+    const tiempoInactividadMs = minutos * 60 * 1000;
+    let temporizadorInactividad;
+
+    function resetearTemporizador() {
+        if (temporizadorInactividad) {
+            clearTimeout(temporizadorInactividad);
+        }
+        temporizadorInactividad = setTimeout(function () {
+            // Limpieza y redirección automática por inactividad
+            window.location.href = '/Account/Logout';
+        }, tiempoInactividadMs);
+    }
+
+    const eventos = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click'];
+    for (var i = 0; i < eventos.length; i++) {
+        window.addEventListener(eventos[i], resetearTemporizador, { passive: true });
+    }
+
+    resetearTemporizador();
 }

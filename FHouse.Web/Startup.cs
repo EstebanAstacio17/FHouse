@@ -17,7 +17,7 @@ namespace FHouse.Web
                 AuthenticationType = DefaultAuthenticationTypes.ApplicationCookie,
                 LoginPath = new PathString("/Account/Login"),
                 LogoutPath = new PathString("/Account/Logout"),
-                ExpireTimeSpan = TimeSpan.FromHours(8),
+                ExpireTimeSpan = TimeSpan.FromMinutes(5),
                 SlidingExpiration = true,
                 CookieName = "FHouse_Auth",
                 // SECURITY: JavaScript cannot read this cookie (mitigates XSS session theft)
