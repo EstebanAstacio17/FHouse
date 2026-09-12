@@ -323,11 +323,14 @@ namespace FHouse.Services.Implementations
             return ResultadoOperacion<IEnumerable<FuenteIngresoDetalleDto>>.Ok(dtos);
         }
 
-        public async Task<ResultadoOperacion<FuenteIngresoDetalleDto>> ObtenerPorIdAsync(int id)
+        public async Task<ResultadoOperacion<FuenteIngresoDetalleDto>> ObtenerPorIdAsync(int id, int? familiaId = null)
         {
             var fuente = await _uow.FuentesIngreso.ObtenerConDetallesAsync(id);
             if (fuente == null)
                 return ResultadoOperacion<FuenteIngresoDetalleDto>.Falla("Fuente de ingreso no encontrada.");
+
+            if (familiaId.HasValue && fuente.FamiliaId != familiaId.Value)
+                return ResultadoOperacion<FuenteIngresoDetalleDto>.Falla("No tiene permisos para acceder a esta fuente de ingreso.");
 
             var dto = _mapper.Map<FuenteIngresoDetalleDto>(fuente);
             var transacciones = await _uow.Transacciones.ObtenerPorFuenteAsync(id);
@@ -338,11 +341,14 @@ namespace FHouse.Services.Implementations
             return ResultadoOperacion<FuenteIngresoDetalleDto>.Ok(dto);
         }
 
-        public async Task<ResultadoOperacion<bool>> ActualizarFuenteAsync(int id, CrearFuenteIngresoDto dto)
+        public async Task<ResultadoOperacion<bool>> ActualizarFuenteAsync(int id, CrearFuenteIngresoDto dto, int? familiaId = null)
         {
             var fuente = await _uow.FuentesIngreso.ObtenerPorIdAsync(id);
             if (fuente == null)
                 return ResultadoOperacion<bool>.Falla("Fuente de ingreso no encontrada.");
+
+            if (familiaId.HasValue && fuente.FamiliaId != familiaId.Value)
+                return ResultadoOperacion<bool>.Falla("No tiene permisos para modificar esta fuente de ingreso.");
 
             fuente.Nombre = dto.Nombre;
             fuente.Descripcion = dto.Descripcion;
@@ -373,11 +379,14 @@ namespace FHouse.Services.Implementations
             return ResultadoOperacion<bool>.Ok(true, "Fuente de ingreso actualizada.");
         }
 
-        public async Task<ResultadoOperacion<bool>> EliminarFuenteAsync(int id, string usuarioId)
+        public async Task<ResultadoOperacion<bool>> EliminarFuenteAsync(int id, string usuarioId, int? familiaId = null)
         {
             var fuente = await _uow.FuentesIngreso.ObtenerPorIdAsync(id);
             if (fuente == null)
                 return ResultadoOperacion<bool>.Falla("Fuente de ingreso no encontrada.");
+
+            if (familiaId.HasValue && fuente.FamiliaId != familiaId.Value)
+                return ResultadoOperacion<bool>.Falla("No tiene permisos para eliminar esta fuente de ingreso.");
 
             // Verificar si posee movimientos/transacciones ACTIVAS
             bool tieneTransaccionesActivas = await _uow.Transacciones.ExisteAsync(t => t.FuenteIngresoId == id && t.Activo);
@@ -464,11 +473,14 @@ namespace FHouse.Services.Implementations
             }
         }
 
-        public async Task<ResultadoOperacion<bool>> InhabilitarFuenteAsync(int id, string usuarioId)
+        public async Task<ResultadoOperacion<bool>> InhabilitarFuenteAsync(int id, string usuarioId, int? familiaId = null)
         {
             var fuente = await _uow.FuentesIngreso.ObtenerPorIdAsync(id);
             if (fuente == null)
                 return ResultadoOperacion<bool>.Falla("Fuente de ingreso no encontrada.");
+
+            if (familiaId.HasValue && fuente.FamiliaId != familiaId.Value)
+                return ResultadoOperacion<bool>.Falla("No tiene permisos para inhabilitar esta fuente de ingreso.");
 
             fuente.Activo = false;
             fuente.FechaModificacion = DateTime.UtcNow;
@@ -494,11 +506,14 @@ namespace FHouse.Services.Implementations
             return ResultadoOperacion<bool>.Ok(true, $"La fuente '{fuente.Nombre}' ha sido inhabilitada.");
         }
 
-        public async Task<ResultadoOperacion<bool>> HabilitarFuenteAsync(int id, string usuarioId)
+        public async Task<ResultadoOperacion<bool>> HabilitarFuenteAsync(int id, string usuarioId, int? familiaId = null)
         {
             var fuente = await _uow.FuentesIngreso.ObtenerPorIdAsync(id);
             if (fuente == null)
                 return ResultadoOperacion<bool>.Falla("Fuente de ingreso no encontrada.");
+
+            if (familiaId.HasValue && fuente.FamiliaId != familiaId.Value)
+                return ResultadoOperacion<bool>.Falla("No tiene permisos para habilitar esta fuente de ingreso.");
 
             fuente.Activo = true;
             fuente.FechaModificacion = DateTime.UtcNow;
@@ -557,7 +572,7 @@ namespace FHouse.Services.Implementations
             return ResultadoOperacion<CuentaDetalleDto>.Ok(resultadoDto, "Cuenta creada exitosamente.");
         }
 
-        public async Task<ResultadoOperacion<bool>> ActualizarCuentaAsync(int id, CrearCuentaDto dto, string usuarioId)
+        public async Task<ResultadoOperacion<bool>> ActualizarCuentaAsync(int id, CrearCuentaDto dto, string usuarioId, int? familiaId = null)
         {
             var validacion = await _validator.ValidateAsync(dto);
             if (!validacion.IsValid)
@@ -566,6 +581,9 @@ namespace FHouse.Services.Implementations
             var cuenta = await _uow.Cuentas.ObtenerPorIdAsync(id);
             if (cuenta == null)
                 return ResultadoOperacion<bool>.Falla("Cuenta no encontrada.");
+
+            if (familiaId.HasValue && cuenta.FamiliaId != familiaId.Value)
+                return ResultadoOperacion<bool>.Falla("No tiene permisos para modificar esta cuenta.");
 
             cuenta.Nombre = dto.Nombre;
             cuenta.InstitucionFinanciera = dto.InstitucionFinanciera;
@@ -581,11 +599,14 @@ namespace FHouse.Services.Implementations
             return ResultadoOperacion<bool>.Ok(true, "Cuenta actualizada exitosamente.");
         }
 
-        public async Task<ResultadoOperacion<bool>> EliminarCuentaAsync(int id, string usuarioId)
+        public async Task<ResultadoOperacion<bool>> EliminarCuentaAsync(int id, string usuarioId, int? familiaId = null)
         {
             var cuenta = await _uow.Cuentas.ObtenerPorIdAsync(id);
             if (cuenta == null)
                 return ResultadoOperacion<bool>.Falla("Cuenta no encontrada.");
+
+            if (familiaId.HasValue && cuenta.FamiliaId != familiaId.Value)
+                return ResultadoOperacion<bool>.Falla("No tiene permisos para eliminar esta cuenta.");
 
             // Verificar si posee movimientos/transacciones ACTIVAS como origen o destino
             bool tieneTransaccionesActivas = await _uow.Transacciones.ExisteAsync(t => 
@@ -664,11 +685,14 @@ namespace FHouse.Services.Implementations
             }
         }
 
-        public async Task<ResultadoOperacion<bool>> HabilitarCuentaAsync(int id, string usuarioId)
+        public async Task<ResultadoOperacion<bool>> HabilitarCuentaAsync(int id, string usuarioId, int? familiaId = null)
         {
             var cuenta = await _uow.Cuentas.ObtenerPorIdAsync(id);
             if (cuenta == null)
                 return ResultadoOperacion<bool>.Falla("Cuenta no encontrada.");
+
+            if (familiaId.HasValue && cuenta.FamiliaId != familiaId.Value)
+                return ResultadoOperacion<bool>.Falla("No tiene permisos para habilitar esta cuenta.");
 
             cuenta.Activo = true;
             cuenta.FechaModificacion = DateTime.UtcNow;
@@ -695,11 +719,14 @@ namespace FHouse.Services.Implementations
             return ResultadoOperacion<bool>.Ok(true, $"La cuenta '{cuenta.Nombre}' ha sido reactivada exitosamente.");
         }
 
-        public async Task<ResultadoOperacion<bool>> InhabilitarCuentaAsync(int id, string usuarioId)
+        public async Task<ResultadoOperacion<bool>> InhabilitarCuentaAsync(int id, string usuarioId, int? familiaId = null)
         {
             var cuenta = await _uow.Cuentas.ObtenerPorIdAsync(id);
             if (cuenta == null)
                 return ResultadoOperacion<bool>.Falla("Cuenta no encontrada.");
+
+            if (familiaId.HasValue && cuenta.FamiliaId != familiaId.Value)
+                return ResultadoOperacion<bool>.Falla("No tiene permisos para inhabilitar esta cuenta.");
 
             cuenta.Activo = false;
             cuenta.FechaModificacion = DateTime.UtcNow;
@@ -965,36 +992,17 @@ namespace FHouse.Services.Implementations
         public async Task<ResultadoOperacion<IEnumerable<CategoriaDetalleDto>>> ObtenerPorFamiliaAsync(int familiaId)
         {
             var categorias = await _uow.Categorias.ObtenerPorFamiliaAsync(familiaId);
-            if (categorias == null || !categorias.Any())
-            {
-                var defaults = new[]
-                {
-                    new Categoria { Nombre = "Supermercado y Alimentación", Tipo = TipoCategoria.Egreso, Icono = "shopping-cart", Color = "#34C759", FamiliaId = familiaId, Activo = true },
-                    new Categoria { Nombre = "Vivienda y Servicios", Tipo = TipoCategoria.Egreso, Icono = "home", Color = "#0071E3", FamiliaId = familiaId, Activo = true },
-                    new Categoria { Nombre = "Combustible y Transporte", Tipo = TipoCategoria.Egreso, Icono = "car", Color = "#FF9500", FamiliaId = familiaId, Activo = true },
-                    new Categoria { Nombre = "Salud y Medicamentos", Tipo = TipoCategoria.Egreso, Icono = "heart", Color = "#FF3B30", FamiliaId = familiaId, Activo = true },
-                    new Categoria { Nombre = "Educación y Cursos", Tipo = TipoCategoria.Egreso, Icono = "book-open", Color = "#AF52DE", FamiliaId = familiaId, Activo = true },
-                    new Categoria { Nombre = "Salario y Honorarios", Tipo = TipoCategoria.Ingreso, Icono = "briefcase", Color = "#30D158", FamiliaId = familiaId, Activo = true },
-                    new Categoria { Nombre = "Ventas y Negocios", Tipo = TipoCategoria.Ingreso, Icono = "trending-up", Color = "#2997FF", FamiliaId = familiaId, Activo = true },
-                    new Categoria { Nombre = "Rentas e Inversiones", Tipo = TipoCategoria.Ingreso, Icono = "dollar-sign", Color = "#BF5AF2", FamiliaId = familiaId, Activo = true }
-                };
-
-                foreach (var d in defaults)
-                {
-                    await _uow.Categorias.AgregarAsync(d);
-                }
-                await _uow.GuardarCambiosAsync();
-                categorias = await _uow.Categorias.ObtenerPorFamiliaAsync(familiaId);
-            }
-
-            return ResultadoOperacion<IEnumerable<CategoriaDetalleDto>>.Ok(_mapper.Map<IEnumerable<CategoriaDetalleDto>>(categorias));
+            return ResultadoOperacion<IEnumerable<CategoriaDetalleDto>>.Ok(_mapper.Map<IEnumerable<CategoriaDetalleDto>>(categorias ?? Enumerable.Empty<Categoria>()));
         }
 
-        public async Task<ResultadoOperacion<bool>> EliminarCategoriaAsync(int id)
+        public async Task<ResultadoOperacion<bool>> EliminarCategoriaAsync(int id, int? familiaId = null)
         {
             var cat = await _uow.Categorias.ObtenerPorIdAsync(id);
             if (cat == null)
                 return ResultadoOperacion<bool>.Falla("Categoría no encontrada.");
+
+            if (familiaId.HasValue && cat.FamiliaId != familiaId.Value)
+                return ResultadoOperacion<bool>.Falla("No tiene permisos para eliminar esta categoría.");
 
             bool tieneTransaccionesActivas = await _uow.Transacciones.ExisteAsync(t => t.CategoriaId == id && t.Activo);
             bool tienePresupuestosActivos = await _uow.Presupuestos.ExisteAsync(p => p.CategoriaId == id && p.Activo);
@@ -1438,10 +1446,13 @@ namespace FHouse.Services.Implementations
             return ResultadoOperacion<bool>.Ok(true, "Miembro familiar actualizado correctamente.");
         }
 
-        public async Task<ResultadoOperacion<bool>> InhabilitarMiembroAsync(int usuarioFamiliaId, string usuarioId)
+        public async Task<ResultadoOperacion<bool>> InhabilitarMiembroAsync(int usuarioFamiliaId, string usuarioId, int? familiaId = null)
         {
             var miembro = await _uow.UsuariosFamilia.ObtenerPorIdAsync(usuarioFamiliaId);
             if (miembro == null) return ResultadoOperacion<bool>.Falla("Miembro no encontrado.");
+
+            if (familiaId.HasValue && miembro.FamiliaId != familiaId.Value)
+                return ResultadoOperacion<bool>.Falla("No tiene permisos para inhabilitar miembros de otra familia.");
 
             if (string.Equals(miembro.UsuarioId, usuarioId, StringComparison.OrdinalIgnoreCase))
             {
@@ -1473,10 +1484,13 @@ namespace FHouse.Services.Implementations
             return ResultadoOperacion<bool>.Ok(true, $"El miembro '{miembro.AliasFamiliar}' ha sido inhabilitado.");
         }
 
-        public async Task<ResultadoOperacion<bool>> HabilitarMiembroAsync(int usuarioFamiliaId, string usuarioId)
+        public async Task<ResultadoOperacion<bool>> HabilitarMiembroAsync(int usuarioFamiliaId, string usuarioId, int? familiaId = null)
         {
             var miembro = await _uow.UsuariosFamilia.ObtenerPorIdAsync(usuarioFamiliaId);
             if (miembro == null) return ResultadoOperacion<bool>.Falla("Miembro no encontrado.");
+
+            if (familiaId.HasValue && miembro.FamiliaId != familiaId.Value)
+                return ResultadoOperacion<bool>.Falla("No tiene permisos para habilitar miembros de otra familia.");
 
             miembro.Activo = true;
             miembro.FechaModificacion = DateTime.UtcNow;
@@ -1503,10 +1517,13 @@ namespace FHouse.Services.Implementations
             return ResultadoOperacion<bool>.Ok(true, $"El miembro '{miembro.AliasFamiliar}' ha sido reactivado.");
         }
 
-        public async Task<ResultadoOperacion<bool>> EliminarMiembroAsync(int usuarioFamiliaId, string usuarioId)
+        public async Task<ResultadoOperacion<bool>> EliminarMiembroAsync(int usuarioFamiliaId, string usuarioId, int? familiaId = null)
         {
             var miembro = await _uow.UsuariosFamilia.ObtenerPorIdAsync(usuarioFamiliaId);
             if (miembro == null) return ResultadoOperacion<bool>.Falla("Miembro no encontrado.");
+
+            if (familiaId.HasValue && miembro.FamiliaId != familiaId.Value)
+                return ResultadoOperacion<bool>.Falla("No tiene permisos para eliminar miembros de otra familia.");
 
             if (string.Equals(miembro.UsuarioId, usuarioId, StringComparison.OrdinalIgnoreCase))
             {
@@ -1569,10 +1586,13 @@ namespace FHouse.Services.Implementations
             }
         }
 
-        public async Task<ResultadoOperacion<bool>> AprobarMiembroAsync(int usuarioFamiliaId, RolFamilia rol, string usuarioAdminId)
+        public async Task<ResultadoOperacion<bool>> AprobarMiembroAsync(int usuarioFamiliaId, RolFamilia rol, string usuarioAdminId, int? familiaId = null)
         {
             var miembro = await _uow.UsuariosFamilia.ObtenerPorIdAsync(usuarioFamiliaId);
             if (miembro == null) return ResultadoOperacion<bool>.Falla("Registro de usuario no encontrado.");
+
+            if (familiaId.HasValue && miembro.FamiliaId != familiaId.Value)
+                return ResultadoOperacion<bool>.Falla("No tiene permisos para autorizar miembros de otra familia.");
 
             miembro.Activo = true;
             miembro.Rol = rol;
@@ -1600,10 +1620,13 @@ namespace FHouse.Services.Implementations
             return ResultadoOperacion<bool>.Ok(true, $"¡Usuario '{miembro.AliasFamiliar}' aprobado con éxito con el rol de {rol}!");
         }
 
-        public async Task<ResultadoOperacion<bool>> RechazarMiembroAsync(int usuarioFamiliaId, string usuarioAdminId)
+        public async Task<ResultadoOperacion<bool>> RechazarMiembroAsync(int usuarioFamiliaId, string usuarioAdminId, int? familiaId = null)
         {
             var miembro = await _uow.UsuariosFamilia.ObtenerPorIdAsync(usuarioFamiliaId);
             if (miembro == null) return ResultadoOperacion<bool>.Falla("Registro de usuario no encontrado.");
+
+            if (familiaId.HasValue && miembro.FamiliaId != familiaId.Value)
+                return ResultadoOperacion<bool>.Falla("No tiene permisos para rechazar miembros de otra familia.");
 
             _uow.UsuariosFamilia.Eliminar(miembro);
 

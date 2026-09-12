@@ -70,8 +70,9 @@ namespace FHouse.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Actualizar(int id, CrearFuenteIngresoDto dto)
         {
-            dto.FamiliaId = GetFamiliaId();
-            var resultado = await _fuenteService.ActualizarFuenteAsync(id, dto);
+            int familiaId = GetFamiliaId();
+            dto.FamiliaId = familiaId;
+            var resultado = await _fuenteService.ActualizarFuenteAsync(id, dto, familiaId);
 
             TempData[resultado.Exitoso ? "Exito" : "Error"] = resultado.Mensaje;
             return RedirectToAction("Index");
@@ -81,8 +82,9 @@ namespace FHouse.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Eliminar(int id)
         {
+            int familiaId = GetFamiliaId();
             string usuarioId = GetUsuarioId();
-            var resultado = await _fuenteService.EliminarFuenteAsync(id, usuarioId);
+            var resultado = await _fuenteService.EliminarFuenteAsync(id, usuarioId, familiaId);
 
             TempData[resultado.Exitoso ? "Exito" : "Error"] = resultado.Mensaje;
             return RedirectToAction("Index");
@@ -92,8 +94,9 @@ namespace FHouse.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Inhabilitar(int id)
         {
+            int familiaId = GetFamiliaId();
             string usuarioId = GetUsuarioId();
-            var resultado = await _fuenteService.InhabilitarFuenteAsync(id, usuarioId);
+            var resultado = await _fuenteService.InhabilitarFuenteAsync(id, usuarioId, familiaId);
 
             TempData[resultado.Exitoso ? "Exito" : "Error"] = resultado.Mensaje;
             return RedirectToAction("Index");
@@ -103,8 +106,9 @@ namespace FHouse.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Habilitar(int id)
         {
+            int familiaId = GetFamiliaId();
             string usuarioId = GetUsuarioId();
-            var resultado = await _fuenteService.HabilitarFuenteAsync(id, usuarioId);
+            var resultado = await _fuenteService.HabilitarFuenteAsync(id, usuarioId, familiaId);
 
             TempData[resultado.Exitoso ? "Exito" : "Error"] = resultado.Mensaje;
             return RedirectToAction("Index");
@@ -188,9 +192,10 @@ namespace FHouse.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Actualizar(int id, CrearCuentaDto dto)
         {
-            dto.FamiliaId = GetFamiliaId();
+            int familiaId = GetFamiliaId();
+            dto.FamiliaId = familiaId;
             string usuarioId = GetUsuarioId();
-            var resultado = await _cuentaService.ActualizarCuentaAsync(id, dto, usuarioId);
+            var resultado = await _cuentaService.ActualizarCuentaAsync(id, dto, usuarioId, familiaId);
 
             TempData[resultado.Exitoso ? "Exito" : "Error"] = resultado.Mensaje;
             return RedirectToAction("Index");
@@ -200,8 +205,9 @@ namespace FHouse.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Eliminar(int id)
         {
+            int familiaId = GetFamiliaId();
             string usuarioId = GetUsuarioId();
-            var resultado = await _cuentaService.EliminarCuentaAsync(id, usuarioId);
+            var resultado = await _cuentaService.EliminarCuentaAsync(id, usuarioId, familiaId);
 
             TempData[resultado.Exitoso ? "Exito" : "Error"] = resultado.Mensaje;
             return RedirectToAction("Index");
@@ -211,8 +217,9 @@ namespace FHouse.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Inhabilitar(int id)
         {
+            int familiaId = GetFamiliaId();
             string usuarioId = GetUsuarioId();
-            var resultado = await _cuentaService.InhabilitarCuentaAsync(id, usuarioId);
+            var resultado = await _cuentaService.InhabilitarCuentaAsync(id, usuarioId, familiaId);
 
             TempData[resultado.Exitoso ? "Exito" : "Error"] = resultado.Mensaje;
             return RedirectToAction("Index");
@@ -222,8 +229,9 @@ namespace FHouse.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Habilitar(int id)
         {
+            int familiaId = GetFamiliaId();
             string usuarioId = GetUsuarioId();
-            var resultado = await _cuentaService.HabilitarCuentaAsync(id, usuarioId);
+            var resultado = await _cuentaService.HabilitarCuentaAsync(id, usuarioId, familiaId);
 
             TempData[resultado.Exitoso ? "Exito" : "Error"] = resultado.Mensaje;
             return RedirectToAction("Index");

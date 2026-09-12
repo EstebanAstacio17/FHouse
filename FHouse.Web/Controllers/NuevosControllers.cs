@@ -183,12 +183,12 @@ namespace FHouse.Web.Controllers
                 return RedirectToAction("Index");
             }
 
+            int familiaId = GetFamiliaId();
             string usuarioId = GetUsuarioId();
-            var resultado = await _usuarioService.InhabilitarMiembroAsync(id, usuarioId);
+            var resultado = await _usuarioService.InhabilitarMiembroAsync(id, usuarioId, familiaId);
 
             if (IsHtmxRequest())
             {
-                int familiaId = GetFamiliaId();
                 var miembros = await _usuarioService.ObtenerMiembrosFamiliaAsync(familiaId);
                 return PartialView("_ListaMiembros", miembros.Datos);
             }
@@ -207,12 +207,12 @@ namespace FHouse.Web.Controllers
                 return RedirectToAction("Index");
             }
 
+            int familiaId = GetFamiliaId();
             string usuarioId = GetUsuarioId();
-            var resultado = await _usuarioService.HabilitarMiembroAsync(id, usuarioId);
+            var resultado = await _usuarioService.HabilitarMiembroAsync(id, usuarioId, familiaId);
 
             if (IsHtmxRequest())
             {
-                int familiaId = GetFamiliaId();
                 var miembros = await _usuarioService.ObtenerMiembrosFamiliaAsync(familiaId);
                 return PartialView("_ListaMiembros", miembros.Datos);
             }
@@ -231,12 +231,12 @@ namespace FHouse.Web.Controllers
                 return RedirectToAction("Index");
             }
 
+            int familiaId = GetFamiliaId();
             string usuarioId = GetUsuarioId();
-            var resultado = await _usuarioService.EliminarMiembroAsync(id, usuarioId);
+            var resultado = await _usuarioService.EliminarMiembroAsync(id, usuarioId, familiaId);
 
             if (IsHtmxRequest())
             {
-                int familiaId = GetFamiliaId();
                 var miembros = await _usuarioService.ObtenerMiembrosFamiliaAsync(familiaId);
                 return PartialView("_ListaMiembros", miembros.Datos);
             }
@@ -255,12 +255,12 @@ namespace FHouse.Web.Controllers
                 return RedirectToAction("Index");
             }
 
+            int familiaId = GetFamiliaId();
             string usuarioId = GetUsuarioId();
-            var resultado = await _usuarioService.AprobarMiembroAsync(id, rol, usuarioId);
+            var resultado = await _usuarioService.AprobarMiembroAsync(id, rol, usuarioId, familiaId);
 
             if (IsHtmxRequest())
             {
-                int familiaId = GetFamiliaId();
                 var miembros = await _usuarioService.ObtenerMiembrosFamiliaAsync(familiaId);
                 return PartialView("_ListaMiembros", miembros.Datos);
             }
@@ -279,12 +279,12 @@ namespace FHouse.Web.Controllers
                 return RedirectToAction("Index");
             }
 
+            int familiaId = GetFamiliaId();
             string usuarioId = GetUsuarioId();
-            var resultado = await _usuarioService.RechazarMiembroAsync(id, usuarioId);
+            var resultado = await _usuarioService.RechazarMiembroAsync(id, usuarioId, familiaId);
 
             if (IsHtmxRequest())
             {
-                int familiaId = GetFamiliaId();
                 var miembros = await _usuarioService.ObtenerMiembrosFamiliaAsync(familiaId);
                 return PartialView("_ListaMiembros", miembros.Datos);
             }
@@ -325,7 +325,8 @@ namespace FHouse.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Eliminar(int id)
         {
-            var resultado = await _categoriaService.EliminarCategoriaAsync(id);
+            int familiaId = GetFamiliaId();
+            var resultado = await _categoriaService.EliminarCategoriaAsync(id, familiaId);
             TempData[resultado.Exitoso ? "Exito" : "Error"] = resultado.Mensaje;
             return RedirectToAction("Index");
         }

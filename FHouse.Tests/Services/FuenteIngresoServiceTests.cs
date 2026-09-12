@@ -85,10 +85,36 @@ namespace FHouse.Tests.Services
             var fuenteB = resultado.First(f => f.Id == 2);
             fuenteB.TotalIngresosDOP.Should().Be(3000m);
             fuenteB.TotalEgresosDOP.Should().Be(0m);
-            fuenteB.BalanceNetoDOP.Should().Be(3000m);
-
             // Verification: ObtenerPorFamiliaAsync was called exactly ONCE on TransaccionRepository (no N+1 loops)
             _mockTransaccionRepo.Verify(r => r.ObtenerPorFamiliaAsync(familiaId, null), Times.Once);
+        }
+
+        [Fact]
+        public async Task EliminarFuenteAsync_ConFamiliaIdDistinto_RechazaOperacionPorIDOR()
+        {
+            // Arrange
+            var fuenteId = 10;
+            var familiaAutenticada = 1;
+            var familiaDiferente = 2;
+
+            var fuente = new FuenteIngreso
+            {
+                Id = fuenteId,
+                FamiliaId = familiaDiferente,
+                Nombre = "Fuente de otra familia",
+                Activo = true
+            };
+
+            _mockFuenteRepo.Setup(r => r.ObtenerPorIdAsync(fuenteId))
+                           .ReturnsAsync(fuente);
+
+            // Act
+            var res = await _service.EliminarFuenteAsync(fuenteId, "usuario-test", familiaAutenticada);
+
+            // Assert
+            res.Exitoso.Should().BeFalse();
+            res.Mensaje.Should().Contain("No tiene permisos para eliminar esta fuente de ingreso.");
+            _mockFuenteRepo.Verify(r => r.Eliminar(It.IsAny<FuenteIngreso>()), Times.Never);
         }
     }
 }

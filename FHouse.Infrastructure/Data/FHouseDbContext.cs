@@ -17,7 +17,7 @@ namespace FHouse.Infrastructure.Data
     {
         static FHouseDbContext()
         {
-            Database.SetInitializer<FHouseDbContext>(new CreateDatabaseIfNotExists<FHouseDbContext>());
+            Database.SetInitializer<FHouseDbContext>(null);
         }
 
         public FHouseDbContext() : base("Name=FHouseConnection", throwIfV1Schema: false)

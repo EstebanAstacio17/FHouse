@@ -22,20 +22,20 @@ namespace FHouse.Services.Contracts
     {
         Task<ResultadoOperacion<FuenteIngresoDetalleDto>> CrearFuenteAsync(CrearFuenteIngresoDto dto, string usuarioId);
         Task<ResultadoOperacion<IEnumerable<FuenteIngresoDetalleDto>>> ObtenerPorFamiliaAsync(int familiaId);
-        Task<ResultadoOperacion<FuenteIngresoDetalleDto>> ObtenerPorIdAsync(int id);
-        Task<ResultadoOperacion<bool>> ActualizarFuenteAsync(int id, CrearFuenteIngresoDto dto);
-        Task<ResultadoOperacion<bool>> EliminarFuenteAsync(int id, string usuarioId);
-        Task<ResultadoOperacion<bool>> HabilitarFuenteAsync(int id, string usuarioId);
-        Task<ResultadoOperacion<bool>> InhabilitarFuenteAsync(int id, string usuarioId);
+        Task<ResultadoOperacion<FuenteIngresoDetalleDto>> ObtenerPorIdAsync(int id, int? familiaId = null);
+        Task<ResultadoOperacion<bool>> ActualizarFuenteAsync(int id, CrearFuenteIngresoDto dto, int? familiaId = null);
+        Task<ResultadoOperacion<bool>> EliminarFuenteAsync(int id, string usuarioId, int? familiaId = null);
+        Task<ResultadoOperacion<bool>> HabilitarFuenteAsync(int id, string usuarioId, int? familiaId = null);
+        Task<ResultadoOperacion<bool>> InhabilitarFuenteAsync(int id, string usuarioId, int? familiaId = null);
     }
 
     public interface ICuentaService
     {
         Task<ResultadoOperacion<CuentaDetalleDto>> CrearCuentaAsync(CrearCuentaDto dto, string usuarioId);
-        Task<ResultadoOperacion<bool>> ActualizarCuentaAsync(int id, CrearCuentaDto dto, string usuarioId);
-        Task<ResultadoOperacion<bool>> EliminarCuentaAsync(int id, string usuarioId);
-        Task<ResultadoOperacion<bool>> HabilitarCuentaAsync(int id, string usuarioId);
-        Task<ResultadoOperacion<bool>> InhabilitarCuentaAsync(int id, string usuarioId);
+        Task<ResultadoOperacion<bool>> ActualizarCuentaAsync(int id, CrearCuentaDto dto, string usuarioId, int? familiaId = null);
+        Task<ResultadoOperacion<bool>> EliminarCuentaAsync(int id, string usuarioId, int? familiaId = null);
+        Task<ResultadoOperacion<bool>> HabilitarCuentaAsync(int id, string usuarioId, int? familiaId = null);
+        Task<ResultadoOperacion<bool>> InhabilitarCuentaAsync(int id, string usuarioId, int? familiaId = null);
         Task<ResultadoOperacion<IEnumerable<CuentaDetalleDto>>> ObtenerPorFamiliaAsync(int familiaId);
         Task<ResultadoOperacion<IEnumerable<CuentaDetalleDto>>> ObtenerPorFuenteAsync(int fuenteId);
         Task<ResultadoOperacion<bool>> RealizarTransferenciaAsync(TransferenciaCuentaDto dto, string usuarioId, string nombreUsuario);
@@ -50,7 +50,7 @@ namespace FHouse.Services.Contracts
     {
         Task<ResultadoOperacion<CategoriaDetalleDto>> CrearCategoriaAsync(CrearCategoriaDto dto);
         Task<ResultadoOperacion<IEnumerable<CategoriaDetalleDto>>> ObtenerPorFamiliaAsync(int familiaId);
-        Task<ResultadoOperacion<bool>> EliminarCategoriaAsync(int id);
+        Task<ResultadoOperacion<bool>> EliminarCategoriaAsync(int id, int? familiaId = null);
     }
 
     public interface IPresupuestoService
@@ -79,11 +79,11 @@ namespace FHouse.Services.Contracts
         Task<ResultadoOperacion<MiembroFamiliaDto>> InvitarMiembroAsync(InvitarMiembroDto dto);
         Task<ResultadoOperacion<bool>> CambiarRolAsync(CambiarRolDto dto);
         Task<ResultadoOperacion<bool>> ActualizarMiembroAsync(ActualizarMiembroDto dto, string usuarioId);
-        Task<ResultadoOperacion<bool>> InhabilitarMiembroAsync(int usuarioFamiliaId, string usuarioId);
-        Task<ResultadoOperacion<bool>> HabilitarMiembroAsync(int usuarioFamiliaId, string usuarioId);
-        Task<ResultadoOperacion<bool>> EliminarMiembroAsync(int usuarioFamiliaId, string usuarioId);
-        Task<ResultadoOperacion<bool>> AprobarMiembroAsync(int usuarioFamiliaId, RolFamilia rol, string usuarioAdminId);
-        Task<ResultadoOperacion<bool>> RechazarMiembroAsync(int usuarioFamiliaId, string usuarioAdminId);
+        Task<ResultadoOperacion<bool>> InhabilitarMiembroAsync(int usuarioFamiliaId, string usuarioId, int? familiaId = null);
+        Task<ResultadoOperacion<bool>> HabilitarMiembroAsync(int usuarioFamiliaId, string usuarioId, int? familiaId = null);
+        Task<ResultadoOperacion<bool>> EliminarMiembroAsync(int usuarioFamiliaId, string usuarioId, int? familiaId = null);
+        Task<ResultadoOperacion<bool>> AprobarMiembroAsync(int usuarioFamiliaId, RolFamilia rol, string usuarioAdminId, int? familiaId = null);
+        Task<ResultadoOperacion<bool>> RechazarMiembroAsync(int usuarioFamiliaId, string usuarioAdminId, int? familiaId = null);
     }
 
     public interface IReporteService
