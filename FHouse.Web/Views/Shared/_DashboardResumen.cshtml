@@ -1,0 +1,86 @@
+﻿@model FHouse.Services.DTOs.DashboardResumenDto
+@{
+    // _DashboardResumen.cshtml
+    // Live KPI partial — refreshed by htmx on transaccionCreada/transaccionAnulada
+}
+<div id="dashboard-live-content"
+     hx-get="@Url.Action("ResumenParcial", "Dashboard")"
+     hx-trigger="transaccionCreada from:body, transaccionAnulada from:body"
+     hx-swap="outerHTML"
+     hx-indicator="#dashboard-refresh-indicator">
+
+    <div id="dashboard-refresh-indicator" class="htmx-indicator fixed top-4 right-4 z-50">
+        <div class="flex items-center gap-2 bg-black/80 dark:bg-white/10 backdrop-blur-md px-3.5 py-2 rounded-full text-white text-xs font-medium shadow-lg">
+            <div class="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            <span>Actualizando...</span>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div class="apple-card p-6 relative overflow-hidden">
+            <div class="flex items-center justify-between text-subtitle mb-3">
+                <span class="text-xs font-semibold uppercase tracking-wider">Balance Neto (Mes)</span>
+                <i data-lucide="wallet" class="w-4 h-4 text-[#0071e3] dark:text-[#2997ff]"></i>
+            </div>
+            @if (Model.BalanceNetoMesDOP >= 0)
+            {
+                <div class="text-2xl sm:text-3xl font-extrabold text-[#34c759] dark:text-[#30d158] tracking-tight">RD$ @Model.BalanceNetoMesDOP.ToString("N2")</div>
+            }
+            else
+            {
+                <div class="text-2xl sm:text-3xl font-extrabold text-[#ff3b30] dark:text-[#ff453a] tracking-tight">RD$ @Model.BalanceNetoMesDOP.ToString("N2")</div>
+            }
+            <div class="text-xs text-muted-app mt-2">Ingresos vs Egresos del mes en curso</div>
+        </div>
+        <div class="apple-card p-6 relative overflow-hidden">
+            <div class="flex items-center justify-between text-subtitle mb-3">
+                <span class="text-xs font-semibold uppercase tracking-wider">Ingresos del Mes</span>
+                <i data-lucide="arrow-down-left" class="w-4 h-4 text-[#34c759] dark:text-[#30d158]"></i>
+            </div>
+            <div class="text-2xl sm:text-3xl font-extrabold text-title tracking-tight">RD$ @Model.TotalIngresosMesDOP.ToString("N2")</div>
+            <div class="text-xs text-[#34c759] dark:text-[#30d158] mt-2 flex items-center gap-1 font-medium">
+                <i data-lucide="trending-up" class="w-3.5 h-3.5"></i><span>Fuentes de ingreso activas</span>
+            </div>
+        </div>
+        <div class="apple-card p-6 relative overflow-hidden">
+            <div class="flex items-center justify-between text-subtitle mb-3">
+                <span class="text-xs font-semibold uppercase tracking-wider">Egresos del Mes</span>
+                <i data-lucide="arrow-up-right" class="w-4 h-4 text-[#ff3b30] dark:text-[#ff453a]"></i>
+            </div>
+            <div class="text-2xl sm:text-3xl font-extrabold text-title tracking-tight">RD$ @Model.TotalEgresosMesDOP.ToString("N2")</div>
+            <div class="text-xs text-muted-app mt-2">Gastos operativos y familiares</div>
+        </div>
+        <div class="apple-card p-6 relative overflow-hidden">
+            <div class="flex items-center justify-between text-subtitle mb-3">
+                <span class="text-xs font-semibold uppercase tracking-wider">Disponibilidad en Cuentas</span>
+                <i data-lucide="credit-card" class="w-4 h-4 text-[#af52de] dark:text-[#bf5af2]"></i>
+            </div>
+            <div class="text-xl sm:text-2xl font-bold text-title tracking-tight">RD$ @Model.SaldoTotalCuentasDOP.ToString("N2")</div>
+            <div class="text-xs text-subtitle mt-1 font-semibold">+ $ @Model.SaldoTotalCuentasUSD.ToString("N2") USD</div>
+        </div>
+    </div>
+
+    <div class="apple-card overflow-hidden mt-6">
+        <div class="p-5 border-b border-black/5 dark:border-white/5 flex items-center justify-between">
+            <div>
+                <h2 class="text-base font-bold text-title tracking-tight">Ultimos Movimientos</h2>
+                <p class="text-xs text-subtitle mt-0.5">Historial contable reciente</p>
+            </div>
+            <a href="@Url.Action("Index", "Transaccion")" class="btn-apple-secondary text-xs">
+                <span>Ver todas</span>
+                <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+            </a>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="apple-table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th><th>Concepto</th><th>Fuente / Negocio</th>
+                        <th>Cuenta</th><th class="text-right">Monto</th><th class="text-right"></th>
+                    </tr>
+                </thead>
+                @Html.Partial("_ListaTransacciones", Model.TransaccionesRecientes)
+            </table>
+        </div>
+    </div>
+</div>

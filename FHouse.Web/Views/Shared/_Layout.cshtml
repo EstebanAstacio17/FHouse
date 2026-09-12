@@ -57,7 +57,10 @@
     <link rel="apple-touch-icon" sizes="180x180" href="~/wwwroot/img/apple-touch-icon.png" />
     <link rel="shortcut icon" href="~/favicon.ico" />
 </head>
-<body x-data="{ openModalTransaccion: false, openModalTransferencia: false, openUserDropdown: false }">
+<body x-data="{ openModalTransaccion: false, openModalTransferencia: false, openUserDropdown: false }" 
+      @@abrir-modal-transaccion.window="openModalTransaccion = true"
+      @@cerrar-modal-transaccion.window="openModalTransaccion = false" 
+      @@cerrar-modales.window="openModalTransaccion = false; openModalTransferencia = false; openUserDropdown = false">
     @{
         var currentCtrl = ViewContext.RouteData.Values["controller"] != null ? ViewContext.RouteData.Values["controller"].ToString() : "";
         var isAuth = Request.IsAuthenticated;

@@ -767,13 +767,29 @@ namespace FHouse.Services.Implementations
             var ahora = DateTime.UtcNow;
             var inicioMes = new DateTime(ahora.Year, ahora.Month, 1);
             var finMes = inicioMes.AddMonths(1).AddTicks(-1);
+            var seisMesesAtras = new DateTime(ahora.AddMonths(-5).Year, ahora.AddMonths(-5).Month, 1);
 
-            var totalIngresosMes = await _uow.Transacciones.CalcularTotalIngresosFamiliaAsync(familiaId, inicioMes, finMes);
-            var totalEgresosMes = await _uow.Transacciones.CalcularTotalEgresosFamiliaAsync(familiaId, inicioMes, finMes);
-
+            // Fetch accounts, sources, and transactions in minimal database trips
             var cuentas = (await _uow.Cuentas.ObtenerPorFamiliaAsync(familiaId)).ToList();
-            var transaccionesRecientes = (await _uow.Transacciones.ObtenerPorFamiliaAsync(familiaId, 10)).ToList();
             var fuentes = (await _uow.FuentesIngreso.ObtenerPorFamiliaAsync(familiaId)).ToList();
+            var todasTransacciones6Meses = (await _uow.Transacciones.ObtenerFiltradasAsync(familiaId, seisMesesAtras, finMes, null, null, null, null, null)).ToList();
+
+            var transaccionesMesActual = todasTransacciones6Meses
+                .Where(t => t.FechaTransaccion >= inicioMes && t.FechaTransaccion <= finMes)
+                .ToList();
+
+            var totalIngresosMes = transaccionesMesActual
+                .Where(t => t.Tipo == TipoTransaccion.Ingreso)
+                .Sum(t => t.MontoEnDOP);
+
+            var totalEgresosMes = transaccionesMesActual
+                .Where(t => t.Tipo == TipoTransaccion.Egreso)
+                .Sum(t => t.MontoEnDOP);
+
+            var transaccionesRecientes = todasTransacciones6Meses
+                .OrderByDescending(t => t.FechaTransaccion)
+                .Take(10)
+                .ToList();
 
             var resumen = new DashboardResumenDto
             {
@@ -791,17 +807,17 @@ namespace FHouse.Services.Implementations
             foreach (var f in fuentes)
             {
                 var fDto = _mapper.Map<FuenteIngresoDetalleDto>(f);
-                var fTrans = await _uow.Transacciones.ObtenerPorFuenteAsync(f.Id);
+                var fTrans = todasTransacciones6Meses.Where(t => t.FuenteIngresoId == f.Id).ToList();
                 fDto.TotalIngresosDOP = fTrans.Where(t => t.Tipo == TipoTransaccion.Ingreso).Sum(t => t.MontoEnDOP);
                 fDto.TotalEgresosDOP = fTrans.Where(t => t.Tipo == TipoTransaccion.Egreso).Sum(t => t.MontoEnDOP);
-                fDto.CantidadTransacciones = fTrans.Count();
+                fDto.CantidadTransacciones = fTrans.Count;
                 resumen.FuentesIngreso.Add(fDto);
             }
 
-            var todasTransaccionesMes = await _uow.Transacciones.ObtenerFiltradasAsync(familiaId, inicioMes, finMes, null, null, null, TipoTransaccion.Egreso, null);
-            var totalGastos = todasTransaccionesMes.Sum(t => t.MontoEnDOP);
+            var egresosMes = transaccionesMesActual.Where(t => t.Tipo == TipoTransaccion.Egreso).ToList();
+            var totalGastos = egresosMes.Sum(t => t.MontoEnDOP);
 
-            var categoriasGroup = todasTransaccionesMes
+            var categoriasGroup = egresosMes
                 .GroupBy(t => t.Categoria != null ? t.Categoria.Nombre : "Sin Categoría")
                 .Select(g => new CategoriaGastoDto
                 {
@@ -822,8 +838,12 @@ namespace FHouse.Services.Implementations
                 var inicioPeriodo = new DateTime(mesRef.Year, mesRef.Month, 1);
                 var finPeriodo = inicioPeriodo.AddMonths(1).AddTicks(-1);
 
-                var ing = await _uow.Transacciones.CalcularTotalIngresosFamiliaAsync(familiaId, inicioPeriodo, finPeriodo);
-                var egr = await _uow.Transacciones.CalcularTotalEgresosFamiliaAsync(familiaId, inicioPeriodo, finPeriodo);
+                var transPeriodo = todasTransacciones6Meses
+                    .Where(t => t.FechaTransaccion >= inicioPeriodo && t.FechaTransaccion <= finPeriodo)
+                    .ToList();
+
+                var ing = transPeriodo.Where(t => t.Tipo == TipoTransaccion.Ingreso).Sum(t => t.MontoEnDOP);
+                var egr = transPeriodo.Where(t => t.Tipo == TipoTransaccion.Egreso).Sum(t => t.MontoEnDOP);
 
                 resumen.HistoricoMensual.Add(new FlujoMensualDto
                 {

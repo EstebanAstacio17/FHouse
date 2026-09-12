@@ -1,6 +1,9 @@
 @model IEnumerable<FHouse.Services.DTOs.TransaccionDetalleDto>
 
-<tbody id="transacciones-tbody" class="text-sm">
+<tbody id="transacciones-tbody" class="text-sm" 
+       hx-get="@Url.Action("ObtenerUltimas", "Transaccion")" 
+       hx-trigger="transaccionCreada from:body, transaccionAnulada from:body"
+       hx-swap="outerHTML">
 @if (Model == null || !Model.Any())
 {
     <tr>
@@ -87,8 +90,7 @@ else
             <!-- Acciones -->
             <td class="text-right whitespace-nowrap">
                 <form hx-post="@Url.Action("Anular", "Transaccion", new { id = item.Id })" 
-                      hx-target="#transacciones-tbody" 
-                      hx-swap="outerHTML" 
+                      hx-swap="none" 
                       hx-confirm="¿Estás seguro de anular esta transacción? Se revertirán los saldos en las cuentas."
                       class="inline">
                     @Html.AntiForgeryToken()

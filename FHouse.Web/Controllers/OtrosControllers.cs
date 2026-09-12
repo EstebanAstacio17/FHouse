@@ -313,6 +313,18 @@ namespace FHouse.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> ActualizarTasa(decimal tasa)
         {
+            // SECURITY: Validate range to prevent abuse
+            if (tasa <= 0 || tasa > 999999)
+            {
+                if (IsHtmxRequest())
+                {
+                    Response.StatusCode = 422;
+                    return Content("<span class='text-rose-500'>Tasa de cambio inválida.</span>");
+                }
+                TempData["Error"] = "Tasa de cambio inválida.";
+                return RedirectToAction("Index");
+            }
+
             int familiaId = GetFamiliaId();
             string usuarioId = GetUsuarioId();
 
@@ -322,10 +334,13 @@ namespace FHouse.Web.Controllers
             {
                 if (resultado.Exitoso)
                 {
-                    return Content($"<span class='text-emerald-500 font-semibold'>RD$ {tasa:N2} por USD (Actualizado)</span>");
+                    // SECURITY: Encode the value — never interpolate user-influenced values directly into HTML
+                    var tasaFormateada = System.Web.HttpUtility.HtmlEncode($"RD$ {tasa:N2} por USD (Actualizado)");
+                    return Content($"<span class='text-emerald-500 font-semibold'>{tasaFormateada}</span>");
                 }
                 Response.StatusCode = 422;
-                return Content($"<span class='text-rose-500'>{resultado.Mensaje}</span>");
+                var mensajeSeguro = System.Web.HttpUtility.HtmlEncode(resultado.Mensaje);
+                return Content($"<span class='text-rose-500'>{mensajeSeguro}</span>");
             }
 
             TempData[resultado.Exitoso ? "Exito" : "Error"] = resultado.Mensaje;

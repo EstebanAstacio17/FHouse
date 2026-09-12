@@ -31,6 +31,53 @@ function aplicarTema(tema) {
     }
 }
 
+// Modal Global Helpers
+window.abrirModalTransaccion = function () {
+    const modal = document.getElementById('modal-nueva-transaccion');
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+    
+    const camposContainer = document.getElementById('modal-transaccion-campos-container');
+    if (camposContainer && window.htmx) {
+        htmx.trigger(camposContainer, 'openModalTransaccion');
+    }
+    if (window.lucide) {
+        window.lucide.createIcons();
+    }
+};
+
+window.cerrarModalTransaccion = function () {
+    const modal = document.getElementById('modal-nueva-transaccion');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+    const spinner = document.getElementById('loading-spinner');
+    if (spinner) {
+        spinner.classList.add('hidden');
+    }
+};
+
+window.seleccionarTipoTransaccion = function (tipo) {
+    const input = document.getElementById('modal-input-tipo');
+    if (input) input.value = tipo;
+
+    const btnEgreso = document.getElementById('modal-btn-tipo-egreso');
+    const btnIngreso = document.getElementById('modal-btn-tipo-ingreso');
+
+    if (tipo === '2') {
+        if (btnEgreso) btnEgreso.className = "py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition-all bg-[#ff3b30]/15 text-[#ff3b30] dark:text-[#ff453a] shadow-sm font-bold";
+        if (btnIngreso) btnIngreso.className = "py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition-all text-subtitle hover:text-title font-medium";
+    } else {
+        if (btnIngreso) btnIngreso.className = "py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition-all bg-[#34c759]/15 text-[#34c759] dark:text-[#30d158] shadow-sm font-bold";
+        if (btnEgreso) btnEgreso.className = "py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition-all text-subtitle hover:text-title font-medium";
+    }
+
+    if (window.lucide) {
+        window.lucide.createIcons();
+    }
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     inicializarTema();
 
@@ -41,25 +88,47 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Handle toast messages on trigger
+    // Handle toast messages and auto-close modals on trigger
+    // NOTE: Data refresh (KPI cards, transaction table) is handled declaratively via htmx
+    // attributes on #dashboard-live-content and #transacciones-tbody — NO manual reload needed.
     document.body.addEventListener('transaccionCreada', function () {
-        mostrarToast('Transacción registrada exitosamente.', 'success');
-        const modal = document.querySelector('[x-data]');
-        if (modal && modal.__x) {
-            modal.__x.$data.openModalTransaccion = false;
+        mostrarToast('Movimiento registrado exitosamente.', 'success');
+        cerrarModalTransaccion();
+
+        const form = document.getElementById('form-nueva-transaccion');
+        if (form) {
+            form.reset();
+            // Reset tipo selector to default (Egreso)
+            seleccionarTipoTransaccion('2');
         }
+    });
+
+    document.body.addEventListener('transaccionAnulada', function () {
+        mostrarToast('Transacción anulada correctamente.', 'success');
     });
 
     document.body.addEventListener('fuenteCreada', function () {
         mostrarToast('Fuente de ingreso creada con éxito.', 'success');
+        cerrarModalTransaccion();
+        setTimeout(() => window.location.reload(), 600);
     });
 
     document.body.addEventListener('cuentaCreada', function () {
-        mostrarToast('Cuenta bancaria agregada.', 'success');
+        mostrarToast('Cuenta bancaria agregada exitosamente.', 'success');
+        cerrarModalTransaccion();
+        setTimeout(() => window.location.reload(), 600);
     });
 
     document.body.addEventListener('transferenciaExitosa', function () {
         mostrarToast('Transferencia completada correctamente.', 'success');
+        cerrarModalTransaccion();
+        setTimeout(() => window.location.reload(), 600);
+    });
+
+    document.body.addEventListener('categoriaCreada', function () {
+        mostrarToast('Categoría creada exitosamente.', 'success');
+        cerrarModalTransaccion();
+        setTimeout(() => window.location.reload(), 600);
     });
 
     if (window.lucide) {

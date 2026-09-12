@@ -64,7 +64,13 @@ namespace FHouse.Web.Controllers
         protected string GetUsuarioId()
         {
             var identity = User?.Identity as ClaimsIdentity;
-            return identity?.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "usr-admin-001";
+            var userId = identity?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                // Never expose a fallback ID — fail secure
+                throw new UnauthorizedAccessException("Sesión inválida o expirada.");
+            }
+            return userId;
         }
 
         protected string GetNombreUsuario()
@@ -118,12 +124,45 @@ namespace FHouse.Web.Controllers
                 return claim.Value;
             }
 
-            return "Admin";
+            // Never default to Admin — fail with least privilege
+            return "Miembro";
         }
 
         protected bool IsHtmxRequest()
         {
             return Request.Headers["HX-Request"] == "true";
+        }
+
+        /// <summary>
+        /// Verifica que el usuario autenticado pertenece a la familia solicitada.
+        /// Uso: llama esto antes de exponer recursos por familiaId.
+        /// </summary>
+        protected bool PerteneceFamilia(int familiaIdSolicitado)
+        {
+            return GetFamiliaId() == familiaIdSolicitado;
+        }
+
+        /// <summary>
+        /// Verifica si el usuario tiene rol Admin dentro de la familia.
+        /// </summary>
+        protected bool EsAdminFamilia()
+        {
+            var rol = GetRolUsuario();
+            return string.Equals(rol, "Admin", System.StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>Manejo global de UnauthorizedAccessException — redirige a Login.</summary>
+        protected override void OnException(ExceptionContext filterContext)
+        {
+            if (filterContext.Exception is UnauthorizedAccessException)
+            {
+                filterContext.ExceptionHandled = true;
+                Session.Clear();
+                Session.Abandon();
+                filterContext.Result = RedirectToAction("Login", "Account");
+                return;
+            }
+            base.OnException(filterContext);
         }
     }
 }

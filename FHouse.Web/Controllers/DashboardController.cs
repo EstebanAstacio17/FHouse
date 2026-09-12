@@ -47,5 +47,25 @@ namespace FHouse.Web.Controllers
 
             return View(resultado.Datos);
         }
+
+        /// <summary>
+        /// Htmx endpoint: Returns only the live KPI summary partial so the Dashboard
+        /// can update metrics and recent transactions without a full page reload.
+        /// Triggered by transaccionCreada / transaccionAnulada events.
+        /// </summary>
+        [HttpGet]
+        public async Task<ActionResult> ResumenParcial()
+        {
+            int familiaId = GetFamiliaId();
+            var resultado = await _dashboardService.ObtenerResumenDashboardAsync(familiaId);
+
+            if (!resultado.Exitoso)
+            {
+                Response.StatusCode = 500;
+                return Content(string.Empty);
+            }
+
+            return PartialView("_DashboardResumen", resultado.Datos);
+        }
     }
 }

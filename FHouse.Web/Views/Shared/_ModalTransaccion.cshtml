@@ -1,27 +1,14 @@
-<!-- Modal: Nueva Transacción -->
-<div x-show="openModalTransaccion" 
-     x-transition:enter="transition ease-out duration-300"
-     x-transition:enter-start="opacity-0"
-     x-transition:enter-end="opacity-100"
-     x-transition:leave="transition ease-in duration-200"
-     x-transition:leave-start="opacity-100"
-     x-transition:leave-end="opacity-0"
-     class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-md flex items-center justify-center p-4"
-     style="display: none;">
+<!-- Modal: Nueva Transacción (Pure High-Performance Component) -->
+<div id="modal-nueva-transaccion"
+     class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-md flex items-center justify-center p-4 transition-opacity duration-200"
+     style="display: none;"
+     onclick="if (event.target === this) cerrarModalTransaccion();">
 
-    <div x-on:click.outside="openModalTransaccion = false" 
-         x-show="openModalTransaccion"
-         x-transition:enter="transition ease-out duration-300"
-         x-transition:enter-start="opacity-0 scale-95 translate-y-4"
-         x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-         x-transition:leave="transition ease-in duration-200"
-         x-transition:leave-start="opacity-100 scale-100 translate-y-0"
-         x-transition:leave-end="opacity-0 scale-95 translate-y-4"
-         class="apple-modal w-full max-w-lg p-6 sm:p-8 text-left relative overflow-hidden"
-         x-data="{ tipo: '2', moneda: '1' }">
+    <div class="apple-modal w-full max-w-lg p-6 sm:p-8 text-left relative overflow-hidden"
+         onclick="event.stopPropagation();">
 
         <!-- Close Button -->
-        <button type="button" x-on:click="openModalTransaccion = false" class="absolute top-6 right-6 text-subtitle hover:text-title transition-colors">
+        <button type="button" onclick="cerrarModalTransaccion()" class="absolute top-6 right-6 text-subtitle hover:text-title transition-colors">
             <i data-lucide="x" class="w-5 h-5"></i>
         </button>
 
@@ -30,42 +17,42 @@
 
         <!-- Formulario con soporte AJAX (htmx) -->
         <form hx-post="@Url.Action("Crear", "Transaccion")" 
-              hx-target="#transacciones-tbody" 
-              hx-swap="outerHTML" 
-              hx-indicator="#loading-spinner">
+              hx-swap="none" 
+              hx-indicator="#loading-spinner"
+              id="form-nueva-transaccion">
             
             @Html.AntiForgeryToken()
 
             <!-- Selector Tipo (Egreso / Ingreso) Segmented Apple Control -->
+            <input type="hidden" name="Tipo" id="modal-input-tipo" value="2" />
             <div class="grid grid-cols-2 p-1 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 mb-5">
                 <button type="button" 
-                        x-on:click="tipo = '2'" 
-                        :class="tipo === '2' ? 'bg-[#ff3b30]/15 text-[#ff3b30] dark:text-[#ff453a] shadow-sm font-bold' : 'text-subtitle hover:text-title font-medium'"
-                        class="py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition-all">
+                        id="modal-btn-tipo-egreso"
+                        onclick="seleccionarTipoTransaccion('2')" 
+                        class="py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition-all bg-[#ff3b30]/15 text-[#ff3b30] dark:text-[#ff453a] shadow-sm font-bold">
                     <i data-lucide="arrow-down-circle" class="w-4 h-4"></i>
                     <span>Egreso / Gasto</span>
                 </button>
                 <button type="button" 
-                        x-on:click="tipo = '1'" 
-                        :class="tipo === '1' ? 'bg-[#34c759]/15 text-[#34c759] dark:text-[#30d158] shadow-sm font-bold' : 'text-subtitle hover:text-title font-medium'"
-                        class="py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition-all">
+                        id="modal-btn-tipo-ingreso"
+                        onclick="seleccionarTipoTransaccion('1')" 
+                        class="py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition-all text-subtitle hover:text-title font-medium">
                     <i data-lucide="arrow-up-circle" class="w-4 h-4"></i>
                     <span>Ingreso</span>
                 </button>
             </div>
-            <input type="hidden" name="Tipo" :value="tipo" />
 
             <!-- Monto & Moneda (DOP / USD) -->
             <div class="mb-4">
                 <label class="block text-xs font-medium text-subtitle mb-1.5">Monto y Moneda</label>
                 <div class="grid grid-cols-3 gap-3">
                     <div class="col-span-2 relative">
-                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-subtitle font-bold text-sm" x-text="moneda === '1' ? 'RD$' : '$'"></span>
+                        <span id="modal-label-moneda" class="absolute left-4 top-1/2 -translate-y-1/2 text-subtitle font-bold text-sm">RD$</span>
                         <input type="number" step="0.01" min="0.01" name="Monto" required placeholder="0.00" 
                                class="apple-input pl-14 text-lg font-bold" />
                     </div>
                     <div>
-                        <select name="Moneda" x-model="moneda" class="apple-select font-medium text-sm">
+                        <select name="Moneda" id="modal-select-moneda" onchange="document.getElementById('modal-label-moneda').textContent = this.value === '2' ? '$' : 'RD$';" class="apple-select font-medium text-sm">
                             <option value="1">DOP (RD$)</option>
                             <option value="2">USD ($)</option>
                         </select>
@@ -83,14 +70,14 @@
             <!-- Contenedor dinámico e interconectado de opciones (Fuentes, Cuentas, Categorías) -->
             <div id="modal-transaccion-campos-container"
                  hx-get="@Url.Action("OpcionesModal", "Transaccion")"
-                 hx-trigger="openModalTransaccion from:body, fuenteCreada from:body, cuentaCreada from:body, categoriaCreada from:body"
+                 hx-trigger="load, openModalTransaccion from:body, fuenteCreada from:body, cuentaCreada from:body, categoriaCreada from:body"
                  hx-swap="innerHTML">
                 @Html.Partial("_ModalTransaccionCampos")
             </div>
 
             <!-- Botones de Acción -->
             <div class="flex items-center justify-end gap-3 pt-2">
-                <button type="button" x-on:click="openModalTransaccion = false" class="btn-apple-secondary text-xs">
+                <button type="button" onclick="cerrarModalTransaccion()" class="btn-apple-secondary text-xs">
                     Cancelar
                 </button>
                 <button type="submit" class="btn-apple-primary text-xs flex items-center gap-2">

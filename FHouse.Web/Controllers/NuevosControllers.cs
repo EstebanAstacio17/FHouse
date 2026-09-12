@@ -36,6 +36,13 @@ namespace FHouse.Web.Controllers
             var fechaDesde = desde ?? new DateTime(ahora.Year, ahora.Month, 1);
             var fechaHasta = hasta ?? fechaDesde.AddMonths(1).AddDays(-1);
 
+            // SECURITY/RESILIENCE: Limit date range to 1 year max to prevent DoS via large queries
+            if ((fechaHasta - fechaDesde).TotalDays > 366)
+            {
+                TempData["Error"] = "El rango máximo de exportación es 1 año.";
+                return RedirectToAction("Index");
+            }
+
             var csv = await _reporteService.ExportarCsvAsync(familiaId, fechaDesde, fechaHasta);
             var bytes = Encoding.UTF8.GetBytes(csv);
             return File(bytes, "text/csv", $"FHouse_Reporte_{fechaDesde:yyyyMMdd}_{fechaHasta:yyyyMMdd}.csv");
@@ -124,6 +131,12 @@ namespace FHouse.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> CambiarRol(CambiarRolDto dto)
         {
+            // SECURITY: Only Admins can change roles within the family
+            if (!EsAdminFamilia())
+            {
+                TempData["Error"] = "No tienes permisos para cambiar roles de miembros.";
+                return RedirectToAction("Index");
+            }
             var resultado = await _usuarioService.CambiarRolAsync(dto);
             TempData[resultado.Exitoso ? "Exito" : "Error"] = resultado.Mensaje;
             return RedirectToAction("Index");

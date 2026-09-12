@@ -79,9 +79,13 @@ namespace FHouse.Web.Controllers
             {
                 if (resultado.Exitoso)
                 {
+                    // Fire event so ALL live sections on any page can react
                     Response.Headers.Add("HX-Trigger", "transaccionCreada");
-                    var ultimas = await _transaccionService.ObtenerTransaccionesFamiliaAsync(dto.FamiliaId, 10);
-                    return PartialView("_ListaTransacciones", ultimas.Datos);
+                    // Return the updated transaction list as the swap target
+                    // The tbody in _ListaTransacciones listens for transaccionCreada
+                    // and will re-fetch automatically via its own hx-trigger.
+                    // We just need to return 200 OK so htmx fires the trigger.
+                    return new HttpStatusCodeResult(200);
                 }
 
                 Response.StatusCode = 422;
@@ -111,9 +115,9 @@ namespace FHouse.Web.Controllers
             {
                 if (resultado.Exitoso)
                 {
+                    // Fire event so all live sections react (including Dashboard KPIs)
                     Response.Headers.Add("HX-Trigger", "transaccionAnulada");
-                    var ultimas = await _transaccionService.ObtenerTransaccionesFamiliaAsync(GetFamiliaId(), 10);
-                    return PartialView("_ListaTransacciones", ultimas.Datos);
+                    return new HttpStatusCodeResult(200);
                 }
 
                 Response.StatusCode = 400;
@@ -122,6 +126,18 @@ namespace FHouse.Web.Controllers
 
             TempData[resultado.Exitoso ? "Exito" : "Error"] = resultado.Mensaje;
             return RedirectToAction("Index");
+        }
+
+        /// <summary>
+        /// Dedicated endpoint for htmx to fetch only the recent transactions tbody partial.
+        /// Used by _ListaTransacciones hx-trigger on transaccionCreada/transaccionAnulada events.
+        /// </summary>
+        [HttpGet]
+        public async Task<ActionResult> ObtenerUltimas(int cantidad = 10)
+        {
+            int familiaId = GetFamiliaId();
+            var ultimas = await _transaccionService.ObtenerTransaccionesFamiliaAsync(familiaId, cantidad);
+            return PartialView("_ListaTransacciones", ultimas.Datos);
         }
     }
 }

@@ -4,6 +4,9 @@
    Apple Design System & Theme Engine (Apple.com / Apple Wallet Standard)
    ========================================================================== */
 
+/* Alpine Cloak */
+[x-cloak] { display: none !important; }
+
 :root,
 html.dark {
   /* Dark / Night Sky Blue Theme (Cielo Nocturno / Deep Midnight Sky) */

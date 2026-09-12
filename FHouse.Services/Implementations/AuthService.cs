@@ -98,7 +98,23 @@ namespace FHouse.Services.Implementations
                 return ResultadoOperacion<ClaimsIdentity>.Falla("Ya existe una cuenta registrada con este correo electrónico.");
             }
 
-            // 1. Crear Usuario
+            // RESILIENCE: Validate invitation code FIRST before creating any entities
+            // This prevents orphaned user records if the code is invalid
+            Familia familia = null;
+            RolFamilia rol = RolFamilia.Admin;
+
+            if (!string.IsNullOrWhiteSpace(dto.CodigoInvitacion))
+            {
+                var codigo = dto.CodigoInvitacion.Trim().ToUpperInvariant();
+                familia = await _context.Familias.FirstOrDefaultAsync(f => f.CodigoInvitacion == codigo && f.Activo);
+                if (familia == null)
+                {
+                    return ResultadoOperacion<ClaimsIdentity>.Falla("El código de invitación ingresado no es válido o la familia no existe.");
+                }
+                rol = RolFamilia.Miembro;
+            }
+
+            // Only now create the user — after all validations passed
             var userId = Guid.NewGuid().ToString();
             var user = new ApplicationUser
             {
@@ -114,23 +130,9 @@ namespace FHouse.Services.Implementations
 
             _context.Users.Add(user);
 
-            Familia familia = null;
-            RolFamilia rol = RolFamilia.Admin;
-
-            // 2. Asociar o Crear Familia
-            if (!string.IsNullOrWhiteSpace(dto.CodigoInvitacion))
+            if (familia == null)
             {
-                var codigo = dto.CodigoInvitacion.Trim().ToUpperInvariant();
-                familia = await _context.Familias.FirstOrDefaultAsync(f => f.CodigoInvitacion == codigo && f.Activo);
-                if (familia == null)
-                {
-                    return ResultadoOperacion<ClaimsIdentity>.Falla("El código de invitación ingresado no es válido o la familia no existe.");
-                }
-                rol = RolFamilia.Miembro;
-            }
-            else
-            {
-                // Crear nueva familia
+                // Create new family
                 var nombreFam = string.IsNullOrWhiteSpace(dto.NombreFamilia) ? $"Familia {dto.NombreCompleto.Trim()}" : dto.NombreFamilia.Trim();
                 var codInvitacion = "FH-" + Guid.NewGuid().ToString().Substring(0, 6).ToUpperInvariant();
 
@@ -146,7 +148,7 @@ namespace FHouse.Services.Implementations
                 _context.Familias.Add(familia);
                 await _context.SaveChangesAsync();
 
-                // Sembrar categorías iniciales para la nueva familia
+                // Seed default categories for the new family
                 var categoriasDefault = new[]
                 {
                     new Categoria { Nombre = "Alimentación y Supermercado", Tipo = TipoCategoria.Egreso, Icono = "shopping-cart", Color = "#34C759", FamiliaId = familia.Id },
@@ -161,7 +163,7 @@ namespace FHouse.Services.Implementations
 
                 _context.Categorias.AddRange(categoriasDefault);
 
-                // Crear cuenta bancaria demo inicial
+                // Create default account
                 var cuentaDefault = new Cuenta
                 {
                     Nombre = "Cuenta Principal (DOP)",
@@ -177,7 +179,7 @@ namespace FHouse.Services.Implementations
                 _context.Cuentas.Add(cuentaDefault);
             }
 
-            // 3. Crear relación UsuarioFamilia
+            // 3. Create family member relationship
             var usuarioFamilia = new UsuarioFamilia
             {
                 UsuarioId = userId,
@@ -193,7 +195,7 @@ namespace FHouse.Services.Implementations
 
             await _context.SaveChangesAsync();
 
-            // 4. Generar ClaimsIdentity
+            // 4. Build ClaimsIdentity
             var identity = new ClaimsIdentity(DefaultAuthenticationTypes.ApplicationCookie);
             identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, user.Id));
             identity.AddClaim(new Claim(ClaimTypes.Name, user.UserName));
