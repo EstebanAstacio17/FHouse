@@ -144,13 +144,13 @@
     <!-- ========================================== -->
     <div x-show="openModalFuente" 
          x-cloak
-         x-transition:enter="transition ease-out duration-300"
-         x-transition:enter-start="opacity-0 scale-95"
-         x-transition:enter-end="opacity-100 scale-100"
-         x-transition:leave="transition ease-in duration-200"
-         x-transition:leave-start="opacity-100 scale-100"
-         x-transition:leave-end="opacity-0 scale-95"
-         class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-md p-3 sm:p-4 flex justify-center items-start sm:items-center min-h-screen py-6 sm:py-8" 
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="apple-modal-overlay flex justify-center items-start sm:items-center p-3 sm:p-4 min-h-screen py-6 sm:py-8" 
          style="display: none;">
         <div x-on:click.outside="openModalFuente = false" class="apple-modal w-full max-w-lg p-5 sm:p-6 text-left relative overflow-hidden shadow-2xl border border-white/20 dark:border-white/10 my-auto flex flex-col max-h-[92vh]">
             <button type="button" x-on:click="openModalFuente = false" class="absolute top-5 right-5 p-1.5 rounded-full text-subtitle hover:text-title hover:bg-black/5 dark:hover:bg-white/5 transition-all z-10">
@@ -231,13 +231,13 @@
     <!-- ========================================== -->
     <div x-show="openModalEditarFuente" 
          x-cloak
-         x-transition:enter="transition ease-out duration-300"
-         x-transition:enter-start="opacity-0 scale-95"
-         x-transition:enter-end="opacity-100 scale-100"
-         x-transition:leave="transition ease-in duration-200"
-         x-transition:leave-start="opacity-100 scale-100"
-         x-transition:leave-end="opacity-0 scale-95"
-         class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-md p-3 sm:p-4 flex justify-center items-start sm:items-center min-h-screen py-6 sm:py-8" 
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="apple-modal-overlay flex justify-center items-start sm:items-center min-h-screen py-6 sm:py-8" 
          style="display: none;">
         <div x-on:click.outside="openModalEditarFuente = false" class="apple-modal w-full max-w-lg p-5 sm:p-6 text-left relative overflow-hidden shadow-2xl border border-white/20 dark:border-white/10 my-auto flex flex-col max-h-[92vh]">
             <button type="button" x-on:click="openModalEditarFuente = false" class="absolute top-5 right-5 p-1.5 rounded-full text-subtitle hover:text-title hover:bg-black/5 dark:hover:bg-white/5 transition-all z-10">
