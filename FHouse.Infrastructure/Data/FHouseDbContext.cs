@@ -17,10 +17,16 @@ namespace FHouse.Infrastructure.Data
     {
         static FHouseDbContext()
         {
-            Database.SetInitializer<FHouseDbContext>(null);
+            Database.SetInitializer<FHouseDbContext>(new CreateDatabaseIfNotExists<FHouseDbContext>());
         }
 
         public FHouseDbContext() : base("Name=FHouseConnection", throwIfV1Schema: false)
+        {
+            Configuration.LazyLoadingEnabled = false;
+            Configuration.ProxyCreationEnabled = false;
+        }
+
+        public FHouseDbContext(string nameOrConnectionString) : base(nameOrConnectionString, throwIfV1Schema: false)
         {
             Configuration.LazyLoadingEnabled = false;
             Configuration.ProxyCreationEnabled = false;
