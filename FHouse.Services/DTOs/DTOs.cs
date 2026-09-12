@@ -208,6 +208,7 @@ namespace FHouse.Services.DTOs
     {
         public int MiembroId { get; set; }
         public RolFamilia NuevoRol { get; set; }
+        public string UsuarioIdSolicitante { get; set; }
     }
 
     public class ReporteFinancieroDto

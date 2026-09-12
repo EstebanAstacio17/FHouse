@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using FHouse.Core.Common;
+using FHouse.Core.Enums;
 using FHouse.Services.DTOs;
 
 namespace FHouse.Services.Contracts
@@ -81,6 +82,8 @@ namespace FHouse.Services.Contracts
         Task<ResultadoOperacion<bool>> InhabilitarMiembroAsync(int usuarioFamiliaId, string usuarioId);
         Task<ResultadoOperacion<bool>> HabilitarMiembroAsync(int usuarioFamiliaId, string usuarioId);
         Task<ResultadoOperacion<bool>> EliminarMiembroAsync(int usuarioFamiliaId, string usuarioId);
+        Task<ResultadoOperacion<bool>> AprobarMiembroAsync(int usuarioFamiliaId, RolFamilia rol, string usuarioAdminId);
+        Task<ResultadoOperacion<bool>> RechazarMiembroAsync(int usuarioFamiliaId, string usuarioAdminId);
     }
 
     public interface IReporteService

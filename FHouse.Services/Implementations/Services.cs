@@ -1326,13 +1326,20 @@ namespace FHouse.Services.Implementations
             if (miembro == null)
                 return ResultadoOperacion<bool>.Falla("Miembro no encontrado.");
 
+            var solicitante = (await _uow.UsuariosFamilia.BuscarAsync(uf => uf.UsuarioId == dto.UsuarioIdSolicitante && uf.FamiliaId == miembro.FamiliaId && uf.Activo)).FirstOrDefault();
+            if (solicitante == null || solicitante.Rol != RolFamilia.Admin)
+                return ResultadoOperacion<bool>.Falla("Solo un administrador puede cambiar roles de otros integrantes.");
+
+            if (string.Equals(miembro.UsuarioId, dto.UsuarioIdSolicitante, StringComparison.OrdinalIgnoreCase))
+                return ResultadoOperacion<bool>.Falla("Por seguridad, ningún usuario puede modificar su propio rol. Solo otro administrador puede hacerlo.");
+
             miembro.Rol = dto.NuevoRol;
             miembro.FechaModificacion = DateTime.UtcNow;
 
             _uow.UsuariosFamilia.Actualizar(miembro);
             await _uow.GuardarCambiosAsync();
 
-            return ResultadoOperacion<bool>.Ok(true, "Rol de usuario actualizado.");
+            return ResultadoOperacion<bool>.Ok(true, $"El rol de '{miembro.AliasFamiliar}' ha sido actualizado a {dto.NuevoRol}.");
         }
 
         public async Task<ResultadoOperacion<bool>> ActualizarMiembroAsync(ActualizarMiembroDto dto, string usuarioId)
@@ -1342,10 +1349,40 @@ namespace FHouse.Services.Implementations
             var miembro = await _uow.UsuariosFamilia.ObtenerPorIdAsync(dto.Id);
             if (miembro == null) return ResultadoOperacion<bool>.Falla("Miembro no encontrado.");
 
-            miembro.AliasFamiliar = dto.AliasFamiliar?.Trim();
-            miembro.Rol = dto.Rol;
-            miembro.Activo = dto.Activo;
-            miembro.FechaModificacion = DateTime.UtcNow;
+            var solicitante = (await _uow.UsuariosFamilia.BuscarAsync(uf => uf.UsuarioId == usuarioId && uf.FamiliaId == miembro.FamiliaId && uf.Activo)).FirstOrDefault();
+            if (solicitante == null)
+            {
+                return ResultadoOperacion<bool>.Falla("No tienes membresía activa en este hogar.");
+            }
+
+            bool esMismoUsuario = string.Equals(miembro.UsuarioId, usuarioId, StringComparison.OrdinalIgnoreCase);
+            bool solicitanteEsAdmin = solicitante.Rol == RolFamilia.Admin;
+
+            if (!solicitanteEsAdmin && !esMismoUsuario)
+            {
+                return ResultadoOperacion<bool>.Falla("No tienes permisos de administrador para modificar a otros integrantes.");
+            }
+
+            // REGLA DE SEGURIDAD: Ningún usuario puede modificar su propio rol ni auto-inhabilitarse
+            if (esMismoUsuario)
+            {
+                // Solo se le permite actualizar su propio alias/parentesco
+                miembro.AliasFamiliar = dto.AliasFamiliar?.Trim();
+                miembro.FechaModificacion = DateTime.UtcNow;
+            }
+            else
+            {
+                // Solo un Administrador puede cambiar el rol o estado de otro usuario
+                if (!solicitanteEsAdmin)
+                {
+                    return ResultadoOperacion<bool>.Falla("Solo un administrador puede modificar el rol o acceso de este integrante.");
+                }
+
+                miembro.AliasFamiliar = dto.AliasFamiliar?.Trim();
+                miembro.Rol = dto.Rol;
+                miembro.Activo = dto.Activo;
+                miembro.FechaModificacion = DateTime.UtcNow;
+            }
 
             _uow.UsuariosFamilia.Actualizar(miembro);
 
@@ -1356,8 +1393,8 @@ namespace FHouse.Services.Implementations
                 Accion = "UPDATE_MIEMBRO",
                 RegistroId = miembro.Id.ToString(),
                 UsuarioId = usuarioId,
-                NombreUsuario = "Usuario",
-                Detalles = $"Actualización de miembro familiar '{miembro.AliasFamiliar}' (Rol: {miembro.Rol}, Activo: {miembro.Activo})",
+                NombreUsuario = solicitante.AliasFamiliar ?? "Usuario",
+                Detalles = $"Actualización de miembro '{miembro.AliasFamiliar}' (Rol: {miembro.Rol}, Activo: {miembro.Activo}) por '{solicitante.AliasFamiliar}'",
                 FechaCreacion = DateTime.UtcNow
             };
             if (_uow.AuditLogs != null)
@@ -1373,6 +1410,11 @@ namespace FHouse.Services.Implementations
         {
             var miembro = await _uow.UsuariosFamilia.ObtenerPorIdAsync(usuarioFamiliaId);
             if (miembro == null) return ResultadoOperacion<bool>.Falla("Miembro no encontrado.");
+
+            if (string.Equals(miembro.UsuarioId, usuarioId, StringComparison.OrdinalIgnoreCase))
+            {
+                return ResultadoOperacion<bool>.Falla("No puedes inhabilitar tu propia cuenta de acceso.");
+            }
 
             miembro.Activo = false;
             miembro.FechaModificacion = DateTime.UtcNow;
@@ -1434,6 +1476,11 @@ namespace FHouse.Services.Implementations
             var miembro = await _uow.UsuariosFamilia.ObtenerPorIdAsync(usuarioFamiliaId);
             if (miembro == null) return ResultadoOperacion<bool>.Falla("Miembro no encontrado.");
 
+            if (string.Equals(miembro.UsuarioId, usuarioId, StringComparison.OrdinalIgnoreCase))
+            {
+                return ResultadoOperacion<bool>.Falla("No puedes eliminar tu propia cuenta del hogar.");
+            }
+
             // Verificar si el miembro posee transacciones/movimientos activos
             bool tieneTransaccionesActivas = await _uow.Transacciones.ExisteAsync(t => 
                 t.FamiliaId == miembro.FamiliaId && t.UsuarioRegistradorId == miembro.UsuarioId && t.Activo);
@@ -1488,6 +1535,64 @@ namespace FHouse.Services.Implementations
                 await _uow.GuardarCambiosAsync();
                 return ResultadoOperacion<bool>.Ok(true, $"El miembro '{miembro.AliasFamiliar}' ha sido eliminado correctamente.");
             }
+        }
+
+        public async Task<ResultadoOperacion<bool>> AprobarMiembroAsync(int usuarioFamiliaId, RolFamilia rol, string usuarioAdminId)
+        {
+            var miembro = await _uow.UsuariosFamilia.ObtenerPorIdAsync(usuarioFamiliaId);
+            if (miembro == null) return ResultadoOperacion<bool>.Falla("Registro de usuario no encontrado.");
+
+            miembro.Activo = true;
+            miembro.Rol = rol;
+            miembro.FechaModificacion = DateTime.UtcNow;
+
+            _uow.UsuariosFamilia.Actualizar(miembro);
+
+            var log = new AuditLog
+            {
+                FamiliaId = miembro.FamiliaId,
+                Entidad = "UsuarioFamilia",
+                Accion = "APROBAR_ACCESO",
+                RegistroId = miembro.Id.ToString(),
+                UsuarioId = usuarioAdminId,
+                NombreUsuario = "Administrador",
+                Detalles = $"Aprobación y autorización de acceso al usuario '{miembro.AliasFamiliar}' con rol '{rol}'",
+                FechaCreacion = DateTime.UtcNow
+            };
+            if (_uow.AuditLogs != null)
+            {
+                await _uow.AuditLogs.AgregarAsync(log);
+            }
+
+            await _uow.GuardarCambiosAsync();
+            return ResultadoOperacion<bool>.Ok(true, $"¡Usuario '{miembro.AliasFamiliar}' aprobado con éxito con el rol de {rol}!");
+        }
+
+        public async Task<ResultadoOperacion<bool>> RechazarMiembroAsync(int usuarioFamiliaId, string usuarioAdminId)
+        {
+            var miembro = await _uow.UsuariosFamilia.ObtenerPorIdAsync(usuarioFamiliaId);
+            if (miembro == null) return ResultadoOperacion<bool>.Falla("Registro de usuario no encontrado.");
+
+            _uow.UsuariosFamilia.Eliminar(miembro);
+
+            var log = new AuditLog
+            {
+                FamiliaId = miembro.FamiliaId,
+                Entidad = "UsuarioFamilia",
+                Accion = "RECHAZAR_ACCESO",
+                RegistroId = miembro.Id.ToString(),
+                UsuarioId = usuarioAdminId,
+                NombreUsuario = "Administrador",
+                Detalles = $"Rechazo de solicitud de acceso del usuario '{miembro.AliasFamiliar}'",
+                FechaCreacion = DateTime.UtcNow
+            };
+            if (_uow.AuditLogs != null)
+            {
+                await _uow.AuditLogs.AgregarAsync(log);
+            }
+
+            await _uow.GuardarCambiosAsync();
+            return ResultadoOperacion<bool>.Ok(true, $"La solicitud de acceso de '{miembro.AliasFamiliar}' ha sido rechazada.");
         }
     }
 

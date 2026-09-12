@@ -1,7 +1,9 @@
 using System;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web.Mvc;
+using FHouse.Core.Enums;
 using FHouse.Services.Contracts;
 using FHouse.Services.DTOs;
 
@@ -62,8 +64,16 @@ namespace FHouse.Web.Controllers
         public async Task<ActionResult> Index()
         {
             int familiaId = GetFamiliaId();
+            string usuarioId = GetUsuarioId();
             var familia = await _usuarioService.ObtenerFamiliaAsync(familiaId);
             var miembros = await _usuarioService.ObtenerMiembrosFamiliaAsync(familiaId);
+
+            // Sincronizar el rol del usuario actual autenticado directamente desde la base de datos
+            var miembroActual = miembros.Datos?.FirstOrDefault(m => string.Equals(m.UsuarioId, usuarioId, StringComparison.OrdinalIgnoreCase));
+            if (miembroActual != null)
+            {
+                Session["Rol"] = miembroActual.Rol.ToString();
+            }
 
             if (familia.Exitoso && familia.Datos != null)
             {
@@ -72,6 +82,8 @@ namespace FHouse.Web.Controllers
             }
 
             ViewBag.Familia = familia.Datos;
+            ViewBag.UsuarioIdActual = usuarioId;
+            ViewBag.EsAdmin = EsAdminFamilia();
             return View(miembros.Datos);
         }
 
@@ -134,9 +146,10 @@ namespace FHouse.Web.Controllers
             // SECURITY: Only Admins can change roles within the family
             if (!EsAdminFamilia())
             {
-                TempData["Error"] = "No tienes permisos para cambiar roles de miembros.";
+                TempData["Error"] = "No tienes permisos de administrador para cambiar roles de miembros.";
                 return RedirectToAction("Index");
             }
+            dto.UsuarioIdSolicitante = GetUsuarioId();
             var resultado = await _usuarioService.CambiarRolAsync(dto);
             TempData[resultado.Exitoso ? "Exito" : "Error"] = resultado.Mensaje;
             return RedirectToAction("Index");
@@ -220,6 +233,54 @@ namespace FHouse.Web.Controllers
 
             string usuarioId = GetUsuarioId();
             var resultado = await _usuarioService.EliminarMiembroAsync(id, usuarioId);
+
+            if (IsHtmxRequest())
+            {
+                int familiaId = GetFamiliaId();
+                var miembros = await _usuarioService.ObtenerMiembrosFamiliaAsync(familiaId);
+                return PartialView("_ListaMiembros", miembros.Datos);
+            }
+
+            TempData[resultado.Exitoso ? "Exito" : "Error"] = resultado.Mensaje;
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> Aprobar(int id, RolFamilia rol = RolFamilia.Miembro)
+        {
+            if (!EsAdminFamilia())
+            {
+                TempData["Error"] = "Solo los usuarios administradores pueden autorizar y aprobar el acceso a nuevos integrantes.";
+                return RedirectToAction("Index");
+            }
+
+            string usuarioId = GetUsuarioId();
+            var resultado = await _usuarioService.AprobarMiembroAsync(id, rol, usuarioId);
+
+            if (IsHtmxRequest())
+            {
+                int familiaId = GetFamiliaId();
+                var miembros = await _usuarioService.ObtenerMiembrosFamiliaAsync(familiaId);
+                return PartialView("_ListaMiembros", miembros.Datos);
+            }
+
+            TempData[resultado.Exitoso ? "Exito" : "Error"] = resultado.Mensaje;
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> Rechazar(int id)
+        {
+            if (!EsAdminFamilia())
+            {
+                TempData["Error"] = "Solo los usuarios administradores pueden rechazar solicitudes de acceso.";
+                return RedirectToAction("Index");
+            }
+
+            string usuarioId = GetUsuarioId();
+            var resultado = await _usuarioService.RechazarMiembroAsync(id, usuarioId);
 
             if (IsHtmxRequest())
             {

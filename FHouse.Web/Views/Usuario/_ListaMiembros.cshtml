@@ -1,0 +1,228 @@
+@model IEnumerable<FHouse.Services.DTOs.MiembroFamiliaDto>
+@{
+    var miembros = Model != null ? Model.ToList() : new List<FHouse.Services.DTOs.MiembroFamiliaDto>();
+    var usuarioIdActual = ViewBag.UsuarioIdActual != null ? ViewBag.UsuarioIdActual.ToString() : (Session["UsuarioId"] != null ? Session["UsuarioId"].ToString() : "");
+    var emailActual = Session["Email"] != null ? Session["Email"].ToString() : ((User != null && User.Identity != null) ? User.Identity.Name : "");
+}
+
+<tbody id="lista-miembros-tbody" class="divide-y divide-black/5 dark:divide-white/5">
+@if (!miembros.Any())
+{
+    <tr>
+        <td colspan="6" class="text-center py-12 text-subtitle text-xs">
+            <i data-lucide="users" class="w-8 h-8 mx-auto mb-2 text-muted-app stroke-1"></i>
+            No hay integrantes registrados en esta familia.
+        </td>
+    </tr>
+}
+else
+{
+    foreach (var m in miembros)
+    {
+        var rolTexto = m.Rol.ToString();
+        var esAdmin = m.Rol == FHouse.Core.Enums.RolFamilia.Admin;
+        var esMismoUsuario = (!string.IsNullOrEmpty(emailActual) && string.Equals(m.Email, emailActual, StringComparison.OrdinalIgnoreCase)) ||
+                             (!string.IsNullOrEmpty(usuarioIdActual) && string.Equals(m.UsuarioId, usuarioIdActual, StringComparison.OrdinalIgnoreCase));
+
+        <tr class="hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors group"
+            x-show="filtroEstado === 'todos' || 
+                   (filtroEstado === 'activos' && @(m.Activo ? "true" : "false")) || 
+                   (filtroEstado === 'inactivos' && @(!m.Activo ? "true" : "false")) ||
+                   (filtroEstado === 'pendientes' && @(!m.Activo ? "true" : "false"))">
+            <!-- Miembro Avatar & Info -->
+            <td class="py-3.5 px-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-2xl @(m.Activo ? (esAdmin ? "bg-gradient-to-tr from-blue-600 to-indigo-600 text-white" : "bg-gradient-to-tr from-zinc-700 to-zinc-900 text-zinc-100") : "bg-amber-500/15 text-amber-500 border border-amber-500/30") flex items-center justify-center font-bold text-xs shadow-sm flex-shrink-0">
+                        @(string.IsNullOrWhiteSpace(m.NombreCompleto) ? "U" : m.NombreCompleto.Substring(0, 1).ToUpper())
+                    </div>
+                    <div>
+                        <div class="font-bold text-sm text-title flex items-center gap-2">
+                            <span>@m.NombreCompleto</span>
+                            @if (esMismoUsuario)
+                            {
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/15 text-[#0071e3] dark:text-[#2997ff] border border-blue-500/25">
+                                    Tú
+                                </span>
+                            }
+                            @if (!m.Activo)
+                            {
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25 animate-pulse">
+                                    Pendiente de Aprobación
+                                </span>
+                            }
+                        </div>
+                        <div class="text-[11px] text-subtitle font-mono">@m.Email</div>
+                    </div>
+                </div>
+            </td>
+
+            <!-- Alias / Parentesco -->
+            <td class="py-3.5 px-4 text-xs font-medium text-title">
+                @(string.IsNullOrWhiteSpace(m.AliasFamiliar) ? "—" : m.AliasFamiliar)
+            </td>
+
+            <!-- Rol -->
+            <td class="py-3.5 px-4">
+                @if (m.Rol == FHouse.Core.Enums.RolFamilia.Admin)
+                {
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-blue-500/10 text-[#0071e3] dark:text-[#2997ff] text-xs font-semibold">
+                        <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+                        <span>Administrador</span>
+                    </span>
+                }
+                else if (m.Rol == FHouse.Core.Enums.RolFamilia.Contador)
+                {
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 text-xs font-semibold">
+                        <i data-lucide="calculator" class="w-3.5 h-3.5"></i>
+                        <span>Contador</span>
+                    </span>
+                }
+                else if (m.Rol == FHouse.Core.Enums.RolFamilia.Miembro)
+                {
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
+                        <i data-lucide="user" class="w-3.5 h-3.5"></i>
+                        <span>Miembro</span>
+                    </span>
+                }
+                else
+                {
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-zinc-500/10 text-zinc-600 dark:text-zinc-400 text-xs font-semibold">
+                        <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                        <span>Limitado</span>
+                    </span>
+                }
+            </td>
+
+            <!-- Estado -->
+            <td class="py-3.5 px-4">
+                @if (m.Activo)
+                {
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        Activo
+                    </span>
+                }
+                else
+                {
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                        Por Autorizar
+                    </span>
+                }
+            </td>
+
+            <!-- Fecha Alta -->
+            <td class="py-3.5 px-4 text-xs text-subtitle font-mono">
+                @m.FechaUnion.ToString("dd/MM/yyyy")
+            </td>
+
+            <!-- Acciones -->
+            <td class="py-3.5 px-4 text-right">
+                <div class="flex items-center justify-end gap-1.5">
+                    @if (!m.Activo)
+                    {
+                        <!-- Botón de Aprobación Inmediata con Asignación de Rol -->
+                        <div x-data="{ openAprobarDropdown: false }" class="relative inline-block text-left">
+                            <button type="button" 
+                                    @@click="openAprobarDropdown = !openAprobarDropdown" 
+                                    class="btn-apple-primary py-1.5 px-3 text-xs font-semibold flex items-center gap-1 shadow-sm">
+                                <i data-lucide="user-check" class="w-3.5 h-3.5"></i>
+                                <span>Aprobar y Asignar Rol</span>
+                                <i data-lucide="chevron-down" class="w-3 h-3"></i>
+                            </button>
+
+                            <div x-show="openAprobarDropdown" 
+                                 @@click.outside="openAprobarDropdown = false"
+                                 x-transition:enter="transition ease-out duration-150"
+                                 x-transition:enter-start="opacity-0 scale-95"
+                                 x-transition:enter-end="opacity-100 scale-100"
+                                 x-transition:leave="transition ease-in duration-100"
+                                 x-transition:leave-start="opacity-100 scale-100"
+                                 x-transition:leave-end="opacity-0 scale-95"
+                                 class="apple-modal absolute right-0 mt-2 w-56 p-2 z-50 text-left shadow-xl border border-black/10 dark:border-white/10" 
+                                 style="display: none;">
+                                <div class="px-2.5 py-1.5 text-[11px] font-bold text-subtitle uppercase tracking-wider border-b border-black/5 dark:border-white/5 mb-1">
+                                    Seleccionar Nivel de Acceso:
+                                </div>
+                                <form method="post" action="@Url.Action("Aprobar", "Usuario")" class="space-y-1">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@m.Id" />
+                                    <button type="submit" name="rol" value="Admin" class="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-medium text-title hover:bg-black/5 dark:hover:bg-white/5 flex items-center gap-2">
+                                        <i data-lucide="shield-check" class="w-3.5 h-3.5 text-blue-500"></i>
+                                        <span>Administrador (Control total)</span>
+                                    </button>
+                                    <button type="submit" name="rol" value="Contador" class="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-medium text-title hover:bg-black/5 dark:hover:bg-white/5 flex items-center gap-2">
+                                        <i data-lucide="calculator" class="w-3.5 h-3.5 text-purple-500"></i>
+                                        <span>Contador (Ver y reportar)</span>
+                                    </button>
+                                    <button type="submit" name="rol" value="Miembro" class="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-medium text-title hover:bg-black/5 dark:hover:bg-white/5 flex items-center gap-2">
+                                        <i data-lucide="user" class="w-3.5 h-3.5 text-emerald-500"></i>
+                                        <span>Miembro (Ingresar gastos)</span>
+                                    </button>
+                                    <button type="submit" name="rol" value="Limitado" class="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-medium text-title hover:bg-black/5 dark:hover:bg-white/5 flex items-center gap-2">
+                                        <i data-lucide="eye" class="w-3.5 h-3.5 text-zinc-400"></i>
+                                        <span>Limitado (Solo lectura)</span>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Botón de Rechazar Solicitud -->
+                        <form method="post" action="@Url.Action("Rechazar", "Usuario")" class="inline" onsubmit="return confirm('¿Rechazar solicitud de acceso para @m.NombreCompleto?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@m.Id" />
+                            <button type="submit" class="p-2 rounded-xl text-rose-500 hover:bg-rose-500/10 transition-colors" title="Rechazar solicitud">
+                                <i data-lucide="user-x" class="w-4 h-4"></i>
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <!-- Botón Editar -->
+                        <button type="button" 
+                                @@click="abrirEdicion(@m.Id, '@m.NombreCompleto', '@m.AliasFamiliar', @((int)m.Rol), @(m.Activo ? "true" : "false"), '@m.UsuarioId')"
+                                class="p-2 rounded-xl text-subtitle hover:text-title hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                                title="Editar datos">
+                            <i data-lucide="edit-3" class="w-4 h-4"></i>
+                        </button>
+
+                        if (!esMismoUsuario)
+                        {
+                            <!-- Botón Inhabilitar/Habilitar -->
+                            if (m.Activo)
+                            {
+                                <form method="post" action="@Url.Action("Inhabilitar", "Usuario")" class="inline" onsubmit="return confirm('¿Inhabilitar acceso a @m.NombreCompleto?');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@m.Id" />
+                                    <button type="submit" class="p-2 rounded-xl text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 transition-colors" title="Inhabilitar miembro">
+                                        <i data-lucide="slash" class="w-4 h-4"></i>
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <form method="post" action="@Url.Action("Habilitar", "Usuario")" class="inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@m.Id" />
+                                    <button type="submit" class="p-2 rounded-xl text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-colors" title="Habilitar miembro">
+                                        <i data-lucide="check-circle" class="w-4 h-4"></i>
+                                    </button>
+                                </form>
+                            }
+
+                            <!-- Botón Eliminar -->
+                            <form method="post" action="@Url.Action("Eliminar", "Usuario")" class="inline" onsubmit="return confirm('¿Estás seguro de eliminar a @m.NombreCompleto del hogar?');">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@m.Id" />
+                                <button type="submit" class="p-2 rounded-xl text-rose-500 hover:bg-rose-500/10 transition-colors" title="Eliminar miembro">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </form>
+                        }
+                    }
+                </div>
+            </td>
+        </tr>
+    }
+}
+</tbody>

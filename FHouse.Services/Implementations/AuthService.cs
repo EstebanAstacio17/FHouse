@@ -69,7 +69,12 @@ namespace FHouse.Services.Implementations
             // Obtener relación familiar
             var usuarioFamilia = await _context.UsuariosFamilia
                 .Include(uf => uf.Familia)
-                .FirstOrDefaultAsync(uf => uf.UsuarioId == user.Id && uf.Activo);
+                .FirstOrDefaultAsync(uf => uf.UsuarioId == user.Id);
+
+            if (usuarioFamilia != null && !usuarioFamilia.Activo)
+            {
+                return ResultadoOperacion<ClaimsIdentity>.Falla("Tu cuenta se encuentra pendiente de aprobación por un administrador. No podrás ingresar a la plataforma hasta que tu acceso sea autorizado y se te asigne un rol.");
+            }
 
             int familiaId = 1;
             string familiaNombre = "Mi Familia";
@@ -121,10 +126,12 @@ namespace FHouse.Services.Implementations
                 return ResultadoOperacion<ClaimsIdentity>.Falla("Ya existe una cuenta registrada con este correo electrónico.");
             }
 
+            // Verificar si ya existen usuarios activos en la plataforma
+            bool hayUsuariosActivos = await _context.UsuariosFamilia.AnyAsync(uf => uf.Activo);
+
             // RESILIENCE: Validate invitation code FIRST before creating any entities
-            // This prevents orphaned user records if the code is invalid
             Familia familia = null;
-            RolFamilia rol = RolFamilia.Admin;
+            RolFamilia rol = hayUsuariosActivos ? RolFamilia.Miembro : RolFamilia.Admin;
 
             if (!string.IsNullOrWhiteSpace(dto.CodigoInvitacion))
             {
@@ -134,7 +141,6 @@ namespace FHouse.Services.Implementations
                 {
                     return ResultadoOperacion<ClaimsIdentity>.Falla("El código de invitación ingresado no es válido o la familia no existe.");
                 }
-                rol = RolFamilia.Miembro;
             }
 
             // Only now create the user — after all validations passed
@@ -203,6 +209,9 @@ namespace FHouse.Services.Implementations
             }
 
             // 3. Create family member relationship
+            // Si ya existen usuarios activos en la plataforma, la cuenta se crea INACTIVA (pendiente de aprobación)
+            bool cuentaActivaInicial = !hayUsuariosActivos;
+
             var usuarioFamilia = new UsuarioFamilia
             {
                 UsuarioId = userId,
@@ -210,7 +219,7 @@ namespace FHouse.Services.Implementations
                 Rol = rol,
                 AliasFamiliar = rol == RolFamilia.Admin ? "Administrador" : "Miembro",
                 FechaCreacion = DateTime.UtcNow,
-                Activo = true
+                Activo = cuentaActivaInicial
             };
 
             _context.UsuariosFamilia.Add(usuarioFamilia);
@@ -218,7 +227,16 @@ namespace FHouse.Services.Implementations
 
             await _context.SaveChangesAsync();
 
-            // 4. Build ClaimsIdentity
+            // Si requiere aprobación por un usuario existente, no se emite ticket de sesión
+            if (!cuentaActivaInicial)
+            {
+                return ResultadoOperacion<ClaimsIdentity>.Ok(
+                    null, 
+                    "Tu cuenta ha sido creada exitosamente. Dado que ya existen usuarios activos en la plataforma, tu registro se encuentra pendiente de aprobación. Un administrador o usuario activo debe autorizar tu acceso y asignarte tu rol antes de que puedas ingresar."
+                );
+            }
+
+            // 4. Build ClaimsIdentity (solo para el primer usuario administrador inicial)
             var identity = new ClaimsIdentity(DefaultAuthenticationTypes.ApplicationCookie);
             identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, user.Id));
             identity.AddClaim(new Claim(ClaimTypes.Name, user.UserName));
@@ -228,7 +246,7 @@ namespace FHouse.Services.Implementations
             identity.AddClaim(new Claim("FamiliaNombre", familia.Nombre));
             identity.AddClaim(new Claim(ClaimTypes.Role, rol.ToString()));
 
-            return ResultadoOperacion<ClaimsIdentity>.Ok(identity, "Registro completado con éxito.");
+            return ResultadoOperacion<ClaimsIdentity>.Ok(identity, "¡Cuenta creada exitosamente como Administrador Principal! Bienvenido a F House.");
         }
 
         public async Task<ResultadoOperacion<UsuarioPerfilDto>> ObtenerPerfilUsuarioAsync(string usuarioId)

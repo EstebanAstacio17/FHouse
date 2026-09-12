@@ -26,13 +26,18 @@ namespace FHouse.Web.Controllers
         [HttpGet]
         public ActionResult Login(string returnUrl)
         {
-            if (User != null && User.Identity != null && User.Identity.IsAuthenticated)
+            if (User?.Identity != null && User.Identity.IsAuthenticated)
             {
                 return RedirectToAction("Index", "Dashboard");
             }
 
-            ViewBag.ReturnUrl = returnUrl;
-            return View(new LoginDto { ReturnUrl = returnUrl });
+            // Sanitizar ReturnUrl contra Open Redirect
+            string sanitizedReturnUrl = (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl)) 
+                ? returnUrl 
+                : null;
+
+            ViewBag.ReturnUrl = sanitizedReturnUrl;
+            return View(new LoginDto { ReturnUrl = sanitizedReturnUrl });
         }
 
         // POST: /Account/Login
@@ -53,6 +58,9 @@ namespace FHouse.Web.Controllers
                 return View(dto);
             }
 
+            // Mitigación de Session Fixation: limpiar estado previo antes de emitir tickets
+            Session.Clear();
+
             // Iniciar sesión con OWIN Cookie
             AuthenticationManager.SignOut(DefaultAuthenticationTypes.ApplicationCookie);
             AuthenticationManager.SignIn(new AuthenticationProperties
@@ -61,15 +69,7 @@ namespace FHouse.Web.Controllers
             }, resultado.Datos);
 
             // Almacenar datos en sesión para acceso rápido
-            var familiaIdClaim = resultado.Datos.FindFirst("FamiliaId");
-            if (familiaIdClaim != null && int.TryParse(familiaIdClaim.Value, out int fid))
-            {
-                Session["FamiliaId"] = fid;
-            }
-            Session["NombreCompleto"] = resultado.Datos.FindFirst("NombreCompleto")?.Value;
-            Session["Email"] = resultado.Datos.FindFirst(ClaimTypes.Email)?.Value;
-            Session["FamiliaNombre"] = resultado.Datos.FindFirst("FamiliaNombre")?.Value;
-            Session["Rol"] = resultado.Datos.FindFirst(ClaimTypes.Role)?.Value;
+            EstablecerDatosDeSesion(resultado.Datos);
 
             if (!string.IsNullOrEmpty(dto.ReturnUrl) && Url.IsLocalUrl(dto.ReturnUrl))
             {
@@ -84,7 +84,7 @@ namespace FHouse.Web.Controllers
         [HttpGet]
         public ActionResult Register(string codigo)
         {
-            if (User.Identity.IsAuthenticated)
+            if (User?.Identity != null && User.Identity.IsAuthenticated)
             {
                 return RedirectToAction("Index", "Dashboard");
             }
@@ -110,22 +110,24 @@ namespace FHouse.Web.Controllers
                 return View(dto);
             }
 
-            // Iniciar sesión automáticamente
+            // Mitigación de Session Fixation
+            Session.Clear();
+
+            // Si la cuenta requiere aprobación previa por un usuario activo existente
+            if (resultado.Datos == null)
+            {
+                TempData["Exito"] = resultado.Mensaje;
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Iniciar sesión automáticamente únicamente para el primer usuario administrador
             AuthenticationManager.SignOut(DefaultAuthenticationTypes.ApplicationCookie);
             AuthenticationManager.SignIn(new AuthenticationProperties
             {
                 IsPersistent = true
             }, resultado.Datos);
 
-            var familiaIdClaim = resultado.Datos.FindFirst("FamiliaId");
-            if (familiaIdClaim != null && int.TryParse(familiaIdClaim.Value, out int fid))
-            {
-                Session["FamiliaId"] = fid;
-            }
-            Session["NombreCompleto"] = resultado.Datos.FindFirst("NombreCompleto")?.Value;
-            Session["Email"] = resultado.Datos.FindFirst(ClaimTypes.Email)?.Value;
-            Session["FamiliaNombre"] = resultado.Datos.FindFirst("FamiliaNombre")?.Value;
-            Session["Rol"] = resultado.Datos.FindFirst(ClaimTypes.Role)?.Value;
+            EstablecerDatosDeSesion(resultado.Datos);
 
             TempData["Exito"] = "¡Cuenta creada exitosamente! Bienvenido a F House.";
             return RedirectToAction("Index", "Dashboard");
@@ -136,9 +138,20 @@ namespace FHouse.Web.Controllers
         [AcceptVerbs(HttpVerbs.Get | HttpVerbs.Post)]
         public ActionResult Logout()
         {
-            AuthenticationManager.SignOut(DefaultAuthenticationTypes.ApplicationCookie);
+            AuthenticationManager.SignOut(DefaultAuthenticationTypes.ApplicationCookie, DefaultAuthenticationTypes.ExternalCookie);
             Session.Clear();
             Session.Abandon();
+
+            // Limpieza y expiración de cookies del lado del cliente
+            if (Response.Cookies["FHouse_Auth"] != null)
+            {
+                Response.Cookies["FHouse_Auth"].Expires = DateTime.UtcNow.AddDays(-1);
+            }
+            if (Response.Cookies["ASP.NET_SessionId"] != null)
+            {
+                Response.Cookies["ASP.NET_SessionId"].Expires = DateTime.UtcNow.AddDays(-1);
+            }
+
             return RedirectToAction("Login", "Account");
         }
 
@@ -149,6 +162,12 @@ namespace FHouse.Web.Controllers
         {
             var identity = User.Identity as ClaimsIdentity;
             var userId = identity?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                TempData["Error"] = "Sesión no válida o expirada.";
+                return RedirectToAction("Login");
+            }
 
             var resultado = await _authService.ObtenerPerfilUsuarioAsync(userId);
             if (!resultado.Exitoso)
@@ -175,6 +194,12 @@ namespace FHouse.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> ActualizarPerfil(ActualizarPerfilDto dto)
         {
+            if (!ModelState.IsValid)
+            {
+                TempData["Error"] = "Los datos ingresados para el perfil no son válidos.";
+                return RedirectToAction("Perfil");
+            }
+
             var identity = User.Identity as ClaimsIdentity;
             var userId = identity?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
@@ -191,24 +216,25 @@ namespace FHouse.Web.Controllers
                 return RedirectToAction("Perfil");
             }
 
-            Session["NombreCompleto"] = dto.NombreCompleto.Trim();
-            Session["Email"] = dto.Email.Trim();
+            Session["NombreCompleto"] = dto.NombreCompleto?.Trim();
+            Session["Email"] = dto.Email?.Trim();
 
             // Sincronizar Cookie de Autenticación OWIN
             if (identity != null)
             {
                 var newIdentity = new ClaimsIdentity(identity);
+                
                 var existingNombreClaim = newIdentity.FindFirst("NombreCompleto");
                 if (existingNombreClaim != null) newIdentity.RemoveClaim(existingNombreClaim);
-                newIdentity.AddClaim(new Claim("NombreCompleto", dto.NombreCompleto.Trim()));
+                newIdentity.AddClaim(new Claim("NombreCompleto", dto.NombreCompleto?.Trim() ?? string.Empty));
 
                 var existingEmailClaim = newIdentity.FindFirst(ClaimTypes.Email);
                 if (existingEmailClaim != null) newIdentity.RemoveClaim(existingEmailClaim);
-                newIdentity.AddClaim(new Claim(ClaimTypes.Email, dto.Email.Trim()));
+                newIdentity.AddClaim(new Claim(ClaimTypes.Email, dto.Email?.Trim() ?? string.Empty));
 
                 var existingNameClaim = newIdentity.FindFirst(ClaimTypes.Name);
                 if (existingNameClaim != null) newIdentity.RemoveClaim(existingNameClaim);
-                newIdentity.AddClaim(new Claim(ClaimTypes.Name, dto.Email.Trim()));
+                newIdentity.AddClaim(new Claim(ClaimTypes.Name, dto.Email?.Trim() ?? string.Empty));
 
                 AuthenticationManager.SignOut(DefaultAuthenticationTypes.ApplicationCookie);
                 AuthenticationManager.SignIn(new AuthenticationProperties { IsPersistent = true }, newIdentity);
@@ -224,6 +250,12 @@ namespace FHouse.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> CambiarPassword(CambiarPasswordDto dto)
         {
+            if (!ModelState.IsValid)
+            {
+                TempData["Error"] = "Los datos de contraseña no cumplen con los requisitos de seguridad.";
+                return RedirectToAction("Perfil");
+            }
+
             var identity = User.Identity as ClaimsIdentity;
             var userId = identity?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
@@ -243,5 +275,22 @@ namespace FHouse.Web.Controllers
             TempData["Exito"] = resultado.Mensaje;
             return RedirectToAction("Perfil");
         }
+
+        #region Helpers
+        private void EstablecerDatosDeSesion(ClaimsIdentity identity)
+        {
+            if (identity == null) return;
+
+            var familiaIdClaim = identity.FindFirst("FamiliaId");
+            if (familiaIdClaim != null && int.TryParse(familiaIdClaim.Value, out int fid))
+            {
+                Session["FamiliaId"] = fid;
+            }
+            Session["NombreCompleto"] = identity.FindFirst("NombreCompleto")?.Value;
+            Session["Email"] = identity.FindFirst(ClaimTypes.Email)?.Value;
+            Session["FamiliaNombre"] = identity.FindFirst("FamiliaNombre")?.Value;
+            Session["Rol"] = identity.FindFirst(ClaimTypes.Role)?.Value;
+        }
+        #endregion
     }
 }
